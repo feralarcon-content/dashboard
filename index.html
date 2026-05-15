@@ -1689,13 +1689,11 @@ async function generateInsights() {
     // Use summaries if available, otherwise use key fields — compact format
     const videosCtx = videos.map((v, i) =>
       `V${i+1}. [${v.creator||'?'}] ${v.summary || ('Hook: ' + (v.hook||'').slice(0,60) + ' | Msg: ' + (v.main_message||'').slice(0,60))}`
-    ).join('
-');
+    ).join('\n');
 
     const ideasCtx = ideas.map((id, i) =>
       `I${i+1}. [${id.category}/${id.potential}] ${id.content.slice(0,80)}${id.angle ? ' → ' + id.angle.slice(0,60) : ''}`
-    ).join('
-');
+    ).join('\n');
 
     const voice = getVoice();
 
