@@ -320,14 +320,14 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
     <div class="nav-section">Principal</div>
     <button class="nav-item" onclick="nav('sugerencias',this)">🧠 Sugerencias IA</button>
     <button class="nav-item" onclick="nav('insights',this)">📊 Insights</button>
-    <div class="nav-section">Banco</div>
+    <div class="nav-section">Crear</div>
+    <button class="nav-item active" onclick="nav('scripts',this)">✍️ Generar script</button>
+    <button class="nav-item" onclick="nav('scripts_guardados',this)">📁 Scripts guardados</button>
+    <button class="nav-item" onclick="nav('hooks',this)">🎣 Hook Generator</button>
+    <div class="nav-section">Estudio</div>
+    <button class="nav-item" onclick="nav('analizar',this)">🔍 Analizar video</button>
     <button class="nav-item" onclick="nav('videos',this)">🎬 Videos analizados</button>
     <button class="nav-item" onclick="nav('ideas',this)">💡 Banco de ideas</button>
-    <div class="nav-section">Crear</div>
-    <button class="nav-item" onclick="nav('analizar',this)">🔍 Analizar video</button>
-    <button class="nav-item" onclick="nav('scripts',this)">✍️ Scripts</button>
-    <button class="nav-item" onclick="nav('hooks',this)">🎣 Hook Generator</button>
-    <button class="nav-item" onclick="nav('biblioteca',this)">📚 Biblioteca de hooks</button>
     <div class="nav-section">Config</div>
     <button class="nav-item" onclick="nav('voz',this)">🎙️ Mi voz</button>
     <button class="nav-item" onclick="nav('config',this)">🔑 API Keys</button>
@@ -337,8 +337,8 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
   <main class="main">
     <div class="topbar">
       <div>
-        <div class="topbar-title" id="topbar-title">Sugerencias IA</div>
-        <div class="topbar-sub" id="topbar-sub">Basadas en tus videos e ideas guardadas</div>
+        <div class="topbar-title" id="topbar-title">Generar script</div>
+        <div class="topbar-sub" id="topbar-sub">Con tu voz, tu objetivo y tu enfoque</div>
       </div>
       <div id="topbar-right"></div>
     </div>
@@ -371,7 +371,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
       </div>
 
       <!-- SUGERENCIAS IA -->
-      <div class="panel active" id="panel-sugerencias">
+      <div class="panel" id="panel-sugerencias">
         <div class="card">
           <div class="card-title">🧠 Sugerencias basadas en tu banco</div>
           <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
@@ -443,7 +443,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
       </div>
 
       <!-- SCRIPTS -->
-      <div class="panel" id="panel-scripts">
+      <div class="panel active" id="panel-scripts">
         <div class="grid-2">
           <div>
             <div class="card">
@@ -487,6 +487,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
             📄 Script generado
             <button class="btn btn-sm" style="margin-left:auto" onclick="copyScript()">Copiar</button>
             <button class="btn btn-sm" onclick="saveScript()">Guardar</button>
+            <button class="btn btn-sm" style="background:var(--info-bg);color:var(--info-text);border-color:var(--info-bg)" onclick="openFeedbackModal()">💬 Dar feedback</button>
           </div>
           <div class="ai-out loading" id="sc-out">El script aparece aquí...</div>
         </div>
@@ -675,6 +676,17 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
           <button class="btn btn-primary" onclick="retrainVoice()">⚡ Reentrenar ahora</button>
         </div>
       </div>
+
+      <!-- SCRIPTS GUARDADOS -->
+      <div class="panel" id="panel-scripts_guardados">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div style="font-size:13px;color:var(--text2)">Scripts guardados: <strong id="sg-count">0</strong></div>
+          <button class="btn btn-primary btn-sm" onclick="nav('scripts', document.querySelectorAll('.nav-item')[2])">+ Nuevo script</button>
+        </div>
+        <div id="sg-list">
+          <div class="empty"><span class="empty-icon">📁</span>Sin scripts guardados aún.</div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -689,7 +701,8 @@ const PANELS = {
   videos:      ['Videos analizados','Tu banco de referencia e inspiración'],
   ideas:       ['Banco de ideas','Todo lo que se te ocurra, clasificado y analizado'],
   analizar:    ['Analizar video','Pega la transcripción y la IA la desmembra'],
-  scripts:     ['Generador de scripts','Con tu voz, tu objetivo y tu enfoque'],
+  scripts:     ['Generar script','Con tu voz, tu objetivo y tu enfoque'],
+  scripts_guardados: ['Scripts guardados','Todos tus scripts generados'],
   voz:         ['Mi voz','Configuración permanente · se usa en todos los scripts'],
   config:      ['API Keys','Configuración de Anthropic'],
   hooks:       ['Hook Generator','Genera 10 hooks distintos para cualquier tema'],
@@ -775,6 +788,7 @@ function nav(id, btn) {
   if (id === 'voz') loadVoice();
   if (id === 'config') loadKeys();
   if (id === 'biblioteca') loadBiblioteca();
+  if (id === 'scripts_guardados') loadScriptsGuardados();
   if (id === 'hooks') initHookMechanisms();
   if (id === 'insights') loadInsights();
 }
@@ -1754,6 +1768,68 @@ Temas frecuentes: ${d.topics||''}
     }
   } catch(e) {}
   return '';
+}
+
+
+// ─── SCRIPTS GUARDADOS ────────────────────────────────────
+async function loadScriptsGuardados() {
+  try {
+    const scripts = await sbGet('scripts', '?order=created_at.desc') || [];
+    document.getElementById('sg-count').textContent = scripts.length;
+    const el = document.getElementById('sg-list');
+    if (!scripts.length) {
+      el.innerHTML = '<div class="empty"><span class="empty-icon">📁</span>Sin scripts guardados aún.</div>';
+      return;
+    }
+    el.innerHTML = scripts.map(s => `
+      <div class="card" style="margin-bottom:8px;cursor:pointer" onclick="showScript('${s.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">${s.idea || 'Sin tema'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${new Date(s.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})}</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.5">${(s.script_content||'').slice(0,120)}${(s.script_content||'').length>120?'...':''}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <span class="badge badge-info">${s.focus||'—'}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { toast('Error cargando scripts'); }
+}
+
+let allScripts = [];
+async function showScript(id) {
+  try {
+    const scripts = await sbGet('scripts', '?order=created_at.desc') || [];
+    const s = scripts.find(x => x.id === id);
+    if (!s) return;
+    const html = `
+      <div class="modal-section">
+        <div class="modal-section-title">Idea / Tema</div>
+        <div class="modal-body">${s.idea||'—'}</div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Script</div>
+        <div class="modal-body">${s.script_content||'—'}</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:1rem">
+        <button class="btn btn-primary btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(s.script_content||'')}).then(()=>toast('Copiado ✓'))">Copiar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteScript('${s.id}')">Eliminar</button>
+      </div>
+    `;
+    openModal(s.idea || 'Script guardado', html);
+  } catch(e) { toast('Error'); }
+}
+
+async function deleteScript(id) {
+  if (!confirm('¿Eliminar este script?')) return;
+  try {
+    await sbDelete('scripts', '?id=eq.' + id);
+    closeModalBtn();
+    toast('Script eliminado');
+    loadScriptsGuardados();
+  } catch(e) { toast('Error'); }
 }
 
 // ─── MOBILE ───────────────────────────────────────────────
