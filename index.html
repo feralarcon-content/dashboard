@@ -229,6 +229,35 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+
+<!-- FEEDBACK MODAL -->
+<div class="modal-overlay" id="feedback-overlay" onclick="closeFeedbackModal(event)">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">
+      💬 Feedback al script
+      <button class="btn btn-sm" onclick="closeFeedbackModal()">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
+      Tu feedback se guarda y entrena tu perfil. Mientras más des, más te conoce la IA.
+    </div>
+    <span class="label">¿Qué estuvo bien? ¿Qué cambiarías?</span>
+    <textarea id="fb-general" placeholder="Ej: La estructura me encantó pero suena muy formal. Yo nunca digo 'carnal' ni 'wey'..." style="min-height:90px"></textarea>
+    <span class="label">Palabras / frases que NO uso</span>
+    <input id="fb-avoid" placeholder="Ej: carnal, wey, nel, la neta, raza">
+    <span class="label">Palabras / frases que SÍ uso</span>
+    <input id="fb-use" placeholder="Ej: güey, cuate, qué onda, en serio, literal">
+    <span class="label">Notas sobre estructura o tono</span>
+    <input id="fb-structure" placeholder="Ej: prefiero abrir con pregunta, cierres más cortos, menos agresivo">
+    <div style="display:flex;gap:8px;margin-top:.5rem">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveFeedback()">💾 Guardar y entrenar</button>
+      <button class="btn" onclick="closeFeedbackModal()">Cancelar</button>
+    </div>
+    <div id="fb-processing" style="display:none;margin-top:.75rem;font-size:12px;color:var(--text3);font-style:italic">
+      Actualizando tu perfil de voz...
+    </div>
+  </div>
+</div>
+
 <!-- VIDEO DETAIL MODAL -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
   <div class="modal">
@@ -305,6 +334,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
     <button class="nav-item" onclick="nav('biblioteca',this)">📚 Biblioteca de hooks</button>
     <div class="nav-section">Config</div>
     <button class="nav-item" onclick="nav('voz',this)">🎙️ Mi voz</button>
+    <button class="nav-item" onclick="nav('evolucion',this)">🧬 Evolución</button>
     <button class="nav-item" onclick="nav('config',this)">🔑 API Keys</button>
   </aside>
 
@@ -623,6 +653,33 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
           <span style="font-size:11px;margin-top:4px;display:block">Necesitas al menos 3 videos o ideas guardadas.</span>
         </div>
       </div>
+
+      <!-- EVOLUCIÓN -->
+      <div class="panel" id="panel-evolucion">
+        <div class="grid-3">
+          <div class="metric"><div class="metric-val" id="evo-feedbacks">0</div><div class="metric-label">Feedbacks dados</div></div>
+          <div class="metric"><div class="metric-val" id="evo-version">v1</div><div class="metric-label">Versión de tu voz</div></div>
+          <div class="metric"><div class="metric-val" id="evo-pending">0</div><div class="metric-label">Pendientes de procesar</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🧬 Perfil aprendido</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
+            Lo que la IA ha aprendido sobre ti a través de tus feedbacks. Esto se inyecta automáticamente en cada script.
+          </div>
+          <div class="ai-out" id="evo-learned" style="min-height:120px">Aún no hay patrones aprendidos. Da feedback a tus scripts para entrenar tu perfil.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">📋 Historial de feedbacks</div>
+          <div id="evo-history"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🔄 Reentrenar perfil</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
+            Procesa todos los feedbacks pendientes y actualiza tu perfil de voz automáticamente.
+          </div>
+          <button class="btn btn-primary" onclick="retrainVoice()">⚡ Reentrenar ahora</button>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -643,6 +700,7 @@ const PANELS = {
   config:      ['API Keys','Configuración de Anthropic'],
   hooks:       ['Hook Generator','Genera 10 hooks distintos para cualquier tema'],
   insights:    ['Insights','Patrones detectados en tu banco de videos e ideas'],
+  evolucion:   ['Evolución de voz','Historial de aprendizaje y feedbacks procesados'],
   biblioteca:  ['Biblioteca de hooks','Tu arsenal de hooks guardados'],
 };
 
@@ -726,6 +784,7 @@ function nav(id, btn) {
   if (id === 'biblioteca') loadBiblioteca();
   if (id === 'hooks') initHookMechanisms();
   if (id === 'insights') loadInsights();
+  if (id === 'evolucion') loadEvolution();
 }
 
 // ─── TOAST ────────────────────────────────────────────────
@@ -941,6 +1000,7 @@ Responde en este formato JSON exacto (sin markdown, solo el JSON):
     el.textContent = display; el.classList.remove('loading');
     toast('Video guardado en tu banco ✓');
     generateVideoSummary(parsed, videoId[0].id);
+    learn('video_analyzed', { creator, hook: parsed.hook, why: parsed.why_it_works });
     document.getElementById('an-creator').value = '';
     document.getElementById('an-transcript').value = '';
     document.getElementById('an-ctx').value = '';
@@ -980,6 +1040,7 @@ Responde en JSON exacto (sin markdown):
       status: 'nueva'
     });
     toast('Idea guardada ✓');
+    learn('idea_added', { content: text, category: parsed.category, potential: parsed.potential });
     loadIdeas();
   } catch(e) {
     // Guardar sin análisis si falla
@@ -1038,6 +1099,7 @@ function ideaToScript(id) {
   nav('scripts', document.querySelectorAll('.nav-item')[7]);
   document.getElementById('sc-idea').value = idea.content;
   if (idea.angle) document.getElementById('sc-message').value = idea.angle;
+  learn('idea_to_script', { content: idea.content });
 }
 
 async function deleteIdea(id) {
@@ -1170,6 +1232,7 @@ El script debe sonar como una persona hablando, no texto escrito.`;
     const r = await claude(prompt);
     const parts = r.split(/ÁNGULO 1/);
     el.textContent = parts[0].trim(); el.classList.remove('loading');
+    learn('script_generated', { topic: document.getElementById('sc-idea').value, focus: document.getElementById('sc-focus').value, objective: document.getElementById('sc-obj').value });
 
     if (parts.length > 1) {
       const full = 'ÁNGULO 1' + parts[1];
@@ -1366,6 +1429,206 @@ async function deleteHook(id) {
 
 
 
+
+// ─── BACKGROUND LEARNER ──────────────────────────────────
+// Runs silently after every user action. Never visible.
+
+let currentScriptTopic = '';
+let currentScriptContent = '';
+
+// Core learn function — runs in background after every action
+async function learn(trigger, data = {}) {
+  try {
+    const voice = JSON.parse(localStorage.getItem('fer_voice') || '{}');
+    const profile = await getLearnedProfile();
+
+    const context = buildLearningContext(trigger, data, profile, voice);
+    if (!context) return;
+
+    const prompt = `Eres el motor de aprendizaje interno de un creador de contenido mexicano. Tu trabajo es actualizar silenciosamente su perfil de voz basándote en sus acciones.
+
+PERFIL ACTUAL:
+Quién: ${voice.who || ''}
+Tono: ${voice.tone || ''}
+Evita: ${voice.avoid || ''}
+Audiencia: ${voice.audience || ''}
+
+PERFIL APRENDIDO HASTA AHORA:
+${profile.learned || 'Inicio — sin datos aún.'}
+
+NUEVA SEÑAL (${trigger}):
+${context}
+
+Actualiza el perfil aprendido integrando esta nueva señal. Responde en JSON exacto (sin markdown):
+{
+  "avoid": "Lista actualizada de palabras/frases que nunca usa",
+  "tone": "Descripción de tono actualizada",
+  "learned": "Perfil acumulado completo — qué has aprendido sobre este creador (máx 400 palabras, actualiza con la nueva señal)",
+  "version": ${(profile.version || 0) + 1}
+}`;
+
+    const raw = await claude(prompt);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const updated = JSON.parse(clean);
+
+    // Update voice silently
+    const newVoice = { ...voice };
+    if (updated.avoid) newVoice.avoid = updated.avoid;
+    if (updated.tone) newVoice.tone = updated.tone;
+    localStorage.setItem('fer_voice', JSON.stringify(newVoice));
+
+    // Save to Supabase
+    const existing = await sbGet('voice_evolution', '?order=created_at.desc&limit=1');
+    if (existing && existing.length > 0) {
+      await sbPatch('voice_evolution', {
+        tone: updated.tone,
+        avoid: updated.avoid,
+        learned_patterns: updated.learned,
+        feedback_count: updated.version,
+        updated_at: new Date().toISOString()
+      }, '?id=eq.' + existing[0].id);
+    } else {
+      await sbPost('voice_evolution', {
+        version: 1,
+        who: voice.who,
+        tone: updated.tone || voice.tone,
+        avoid: updated.avoid || voice.avoid,
+        audience: voice.audience,
+        learned_patterns: updated.learned,
+        feedback_count: 1
+      });
+    }
+  } catch(e) {
+    // Silent fail — never interrupt the user
+    console.log('[learn] silent error:', e.message);
+  }
+}
+
+async function getLearnedProfile() {
+  try {
+    const evo = await sbGet('voice_evolution', '?order=created_at.desc&limit=1');
+    if (evo && evo.length > 0) {
+      return {
+        learned: evo[0].learned_patterns || '',
+        version: evo[0].feedback_count || 0,
+        avoid: evo[0].avoid || '',
+        tone: evo[0].tone || ''
+      };
+    }
+  } catch(e) {}
+  return { learned: '', version: 0 };
+}
+
+function buildLearningContext(trigger, data, profile, voice) {
+  switch(trigger) {
+    case 'feedback':
+      return `El creador dio feedback sobre un script:
+Tema del script: ${data.topic || '—'}
+Feedback general: ${data.general || '—'}
+Palabras que NO usa: ${data.avoid || '—'}
+Palabras que SÍ usa: ${data.use || '—'}
+Notas de estructura/tono: ${data.structure || '—'}`;
+
+    case 'video_analyzed':
+      return `Analizó un video de competencia de: ${data.creator || 'desconocido'}
+Hook que usaron: ${(data.hook || '').slice(0, 100)}
+Por qué funcionó: ${(data.why || '').slice(0, 100)}
+Señal: Le interesa este tipo de contenido y estructura.`;
+
+    case 'idea_added':
+      return `Agregó una nueva idea a su banco:
+"${(data.content || '').slice(0, 150)}"
+Categoría detectada: ${data.category || '—'}
+Potencial: ${data.potential || '—'}
+Señal: Este tema le importa y quiere hablar de él.`;
+
+    case 'script_generated':
+      return `Generó un script sobre: "${data.topic || '—'}"
+Enfoque elegido: ${data.focus || '—'}
+Objetivo: ${data.objective || '—'}
+Señal: Estos son temas y enfoques que le interesan explorar.`;
+
+    case 'idea_to_script':
+      return `Convirtió una idea en script: "${(data.content || '').slice(0, 100)}"
+Señal: Esta idea tuvo suficiente potencial para convertirse en video.`;
+
+    default:
+      return null;
+  }
+}
+
+// Inject full learned profile into every Claude call
+function getVoice() {
+  const v = JSON.parse(localStorage.getItem('fer_voice') || '{}');
+  if (!v.who) return '';
+  return `
+VOZ DEL CREADOR:
+Quién soy: ${v.who}
+Tono: ${v.tone}
+Evito: ${v.avoid}
+Audiencia: ${v.audience}`;
+}
+
+// ─── FEEDBACK MODAL (visible UI, learning happens in background) ──
+function openFeedbackModal() {
+  const content = document.getElementById('sc-out').textContent;
+  const topic = document.getElementById('sc-idea').value;
+  if (!content || content === 'El script aparece aquí...') {
+    toast('Genera un script primero'); return;
+  }
+  currentScriptTopic = topic;
+  currentScriptContent = content;
+  document.getElementById('fb-general').value = '';
+  document.getElementById('fb-avoid').value = '';
+  document.getElementById('fb-use').value = '';
+  document.getElementById('fb-structure').value = '';
+  document.getElementById('fb-processing').style.display = 'none';
+  document.getElementById('feedback-overlay').classList.add('open');
+}
+
+function closeFeedbackModal(e) {
+  if (!e || e.target === document.getElementById('feedback-overlay')) {
+    document.getElementById('feedback-overlay').classList.remove('open');
+  }
+}
+
+async function saveFeedback() {
+  const general = document.getElementById('fb-general').value.trim();
+  const avoid = document.getElementById('fb-avoid').value.trim();
+  const use = document.getElementById('fb-use').value.trim();
+  const structure = document.getElementById('fb-structure').value.trim();
+
+  if (!general && !avoid && !use && !structure) {
+    toast('Escribe algo de feedback primero'); return;
+  }
+
+  document.getElementById('fb-processing').style.display = 'block';
+
+  try {
+    // Save raw feedback to DB
+    await sbPost('feedback', {
+      script_topic: currentScriptTopic,
+      script_content: currentScriptContent.slice(0, 500),
+      feedback_text: general,
+      words_avoid: avoid,
+      words_use: use,
+      structure_notes: structure,
+      processed: false
+    });
+
+    document.getElementById('feedback-overlay').classList.remove('open');
+    toast('Feedback guardado ✓');
+
+    // Learn in background — non-blocking
+    learn('feedback', { topic: currentScriptTopic, general, avoid, use, structure });
+
+  } catch(e) {
+    toast('Error: ' + e.message);
+    document.getElementById('fb-processing').style.display = 'none';
+  }
+}
+
+// ─── SUMMARIES & INSIGHTS ─────────────────────────────────
 // ─── SUMMARIES & INSIGHTS ─────────────────────────────────
 
 async function generateVideoSummary(parsed, videoId) {
