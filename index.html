@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estudio Fer</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f7f7f5;--bg3:#f0efe9;
+  --text:#1a1a18;--text2:#6b6b66;--text3:#a0a09a;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);
+  --r:10px;--rs:6px;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --info-bg:#e6f1fb;--info-text:#185fa5;
+  --ok-bg:#eaf3de;--ok-text:#3b6d11;
+  --warn-bg:#faeeda;--warn-text:#854f0b;
+  --purple-bg:#f0eafa;--purple-text:#6b35c4;
+}
+body{font-family:var(--font);background:var(--bg3);color:var(--text);height:100vh;overflow:hidden}
+.app{display:flex;height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:210px;flex-shrink:0;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.25rem 0;overflow-y:auto}
+.logo{padding:0 1.25rem 1.25rem;border-bottom:1px solid var(--border);margin-bottom:.75rem}
+.logo-title{font-size:15px;font-weight:600;color:var(--text)}
+.logo-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.nav-section{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);padding:1rem 1.25rem .4rem}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 1.25rem;font-size:13px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background .12s;font-family:var(--font)}
+.nav-item:hover{background:var(--bg2);color:var(--text)}
+.nav-item.active{background:var(--bg2);color:var(--text);font-weight:600}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--bg);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:600;color:var(--text)}
+.topbar-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.content{padding:1.5rem;flex:1;overflow-y:auto}
+
+/* PANELS */
+.panel{display:none}.panel.active{display:block}
+
+/* CARDS */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem}
+.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:.875rem;display:flex;align-items:center;gap:7px}
+
+/* GRIDS */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem}
+
+/* METRICS */
+.metric{background:var(--bg2);border-radius:var(--rs);padding:1rem;text-align:center}
+.metric-val{font-size:22px;font-weight:600;color:var(--text)}
+.metric-label{font-size:11px;color:var(--text2);margin-top:3px}
+
+/* BADGES */
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--rs);font-weight:500}
+.badge-info{background:var(--info-bg);color:var(--info-text)}
+.badge-ok{background:var(--ok-bg);color:var(--ok-text)}
+.badge-warn{background:var(--warn-bg);color:var(--warn-text)}
+.badge-purple{background:var(--purple-bg);color:var(--purple-text)}
+
+/* TAGS */
+.tag{display:inline-block;font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--border2);color:var(--text2);margin:2px;cursor:pointer;transition:background .12s}
+.tag:hover,.tag.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:13px;border-radius:var(--rs);border:1px solid var(--border2);background:none;color:var(--text);cursor:pointer;font-family:var(--font);transition:background .12s}
+.btn:hover{background:var(--bg2)}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn-primary:hover{opacity:.82}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-danger{background:#fee;color:#c00;border-color:#fcc}
+
+/* INPUTS */
+input,textarea,select{width:100%;font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);padding:8px 12px;outline:none;margin-bottom:.75rem}
+textarea{resize:vertical;min-height:80px}
+input:focus,textarea:focus,select:focus{border-color:var(--text)}
+
+/* LABELS */
+.label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:.4rem;display:block}
+
+/* AI OUTPUT */
+.ai-out{background:var(--bg2);border-radius:var(--rs);padding:1rem;font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;min-height:80px}
+.ai-out.loading{color:var(--text3);font-style:italic}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem}
+.tab{font-size:13px;padding:8px 14px;cursor:pointer;border:none;background:none;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--font)}
+.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:600}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* VIDEO CARDS */
+.video-card{border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:8px;background:var(--bg);cursor:pointer;transition:border-color .12s}
+.video-card:hover{border-color:var(--border2)}
+.video-card-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px}
+.video-card-meta{font-size:11px;color:var(--text3);display:flex;gap:8px;align-items:center}
+
+/* IDEA CARDS */
+.idea-card{border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;margin-bottom:8px;background:var(--bg);display:flex;align-items:flex-start;gap:10px}
+.idea-content{flex:1}
+.idea-text{font-size:13px;color:var(--text);line-height:1.5}
+.idea-meta{font-size:11px;color:var(--text3);margin-top:5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.idea-btns{display:flex;gap:5px;flex-shrink:0}
+.icon-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px;line-height:1}
+.icon-btn:hover{color:var(--text)}
+
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1rem}
+.cal-slot{border:1px solid var(--border);border-radius:var(--r);padding:1rem;background:var(--bg)}
+.cal-slot-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.cal-slot-day{font-size:11px;color:var(--text2)}
+.week-nav{display:flex;align-items:center;gap:10px;margin-bottom:1rem}
+.week-label{font-size:13px;font-weight:600;color:var(--text);min-width:80px}
+
+/* PROGRESS */
+.progress-wrap{background:var(--bg2);border-radius:99px;height:6px;margin-top:6px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;background:var(--text);transition:width .4s}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--r);padding:1.5rem;width:90%;max-width:700px;max-height:85vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center}
+.modal-section{margin-bottom:1rem}
+.modal-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:.5rem}
+.modal-body{font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;background:var(--bg2);border-radius:var(--rs);padding:1rem}
+
+/* SUGGESTION CARDS */
+.sug-card{border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:8px;background:var(--bg)}
+.sug-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px}
+.sug-why{font-size:12px;color:var(--text2);line-height:1.5}
+
+/* ROW */
+.row{display:flex;gap:8px;align-items:flex-start}
+hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--text);color:var(--bg);padding:10px 18px;border-radius:var(--rs);font-size:13px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:2.5rem;color:var(--text3);font-size:13px}
+.empty-icon{font-size:32px;display:block;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- VIDEO DETAIL MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-title">Análisis de video</span>
+      <button class="btn btn-sm" onclick="closeModalBtn()">✕ Cerrar</button>
+    </div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-title">Estudio Fer</div>
+      <div class="logo-sub">Tu herramienta de contenido</div>
+    </div>
+    <div class="nav-section">Principal</div>
+    <button class="nav-item active" onclick="nav('calendario',this)">📅 Calendario</button>
+    <button class="nav-item" onclick="nav('sugerencias',this)">🧠 Sugerencias IA</button>
+    <div class="nav-section">Banco</div>
+    <button class="nav-item" onclick="nav('videos',this)">🎬 Videos analizados</button>
+    <button class="nav-item" onclick="nav('ideas',this)">💡 Banco de ideas</button>
+    <div class="nav-section">Crear</div>
+    <button class="nav-item" onclick="nav('analizar',this)">🔍 Analizar video</button>
+    <button class="nav-item" onclick="nav('scripts',this)">✍️ Scripts</button>
+    <div class="nav-section">Config</div>
+    <button class="nav-item" onclick="nav('voz',this)">🎙️ Mi voz</button>
+    <button class="nav-item" onclick="nav('config',this)">🔑 API Keys</button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Calendario</div>
+        <div class="topbar-sub" id="topbar-sub">2 videos por semana · objetivo 10k seguidores</div>
+      </div>
+      <div id="topbar-right"></div>
+    </div>
+    <div class="content">
+
+      <!-- CALENDARIO -->
+      <div class="panel active" id="panel-calendario">
+        <div class="grid-3">
+          <div class="metric"><div class="metric-val" id="cal-pub">0</div><div class="metric-label">Videos publicados</div></div>
+          <div class="metric"><div class="metric-val" id="cal-sem">0/52</div><div class="metric-label">Semanas completas</div></div>
+          <div class="metric"><div class="metric-val" id="cal-racha">0</div><div class="metric-label">Racha actual (sem)</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📅 Pipeline semanal</div>
+          <div class="week-nav">
+            <button class="btn btn-sm" onclick="changeWeek(-1)">←</button>
+            <span class="week-label" id="week-label">Semana 1</span>
+            <button class="btn btn-sm" onclick="changeWeek(1)">→</button>
+          </div>
+          <div class="cal-grid" id="cal-slots"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🎯 Meta 10k / 12 meses</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px">
+            <span>Semanas con 2 videos: <strong id="wk-done">0</strong></span><span>Meta: 52</span>
+          </div>
+          <div class="progress-wrap"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px">Consistencia > viralidad. 2 videos/semana × 52 semanas = 104 videos.</div>
+        </div>
+      </div>
+
+      <!-- SUGERENCIAS IA -->
+      <div class="panel" id="panel-sugerencias">
+        <div class="card">
+          <div class="card-title">🧠 Sugerencias basadas en tu banco</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
+            La IA analiza tus videos guardados + banco de ideas y te sugiere contenido que va con tu voz y tu nicho.
+          </div>
+          <div class="row">
+            <button class="btn btn-primary" onclick="getSuggestions()">✨ Generar sugerencias</button>
+            <button class="btn" onclick="getSuggestions('trending')">🔥 Con enfoque viral</button>
+            <button class="btn" onclick="getSuggestions('deep')">💬 Más profundas</button>
+          </div>
+        </div>
+        <div id="sug-loading" style="display:none" class="card">
+          <div class="ai-out loading">Analizando tu banco de videos e ideas...</div>
+        </div>
+        <div id="sug-results"></div>
+      </div>
+
+      <!-- VIDEOS ANALIZADOS -->
+      <div class="panel" id="panel-videos">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div style="font-size:13px;color:var(--text2)">Videos guardados: <strong id="videos-count">0</strong></div>
+          <button class="btn btn-primary btn-sm" onclick="nav('analizar', document.querySelectorAll('.nav-item')[6])">+ Analizar nuevo video</button>
+        </div>
+        <div id="videos-list">
+          <div class="empty"><span class="empty-icon">🎬</span>Sin videos aún. Analiza el primero.</div>
+        </div>
+      </div>
+
+      <!-- BANCO DE IDEAS -->
+      <div class="panel" id="panel-ideas">
+        <div class="card">
+          <div class="card-title">💡 Nueva idea</div>
+          <textarea id="idea-inp" placeholder="Escribe lo que sea — una frase, algo que viviste, una opinión, una incomodidad..."></textarea>
+          <div class="row">
+            <button class="btn btn-primary" onclick="addIdea()">✨ Guardar y analizar</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem" id="cat-filters">
+          <span class="tag active" onclick="filterIdeas('todas',this)">Todas</span>
+          <span class="tag" onclick="filterIdeas('crecimiento',this)">Crecimiento</span>
+          <span class="tag" onclick="filterIdeas('opiniones',this)">Opiniones</span>
+          <span class="tag" onclick="filterIdeas('retos',this)">Retos</span>
+          <span class="tag" onclick="filterIdeas('confrontacion',this)">Confrontación</span>
+          <span class="tag" onclick="filterIdeas('motivacion',this)">Motivación</span>
+          <span class="tag" onclick="filterIdeas('relaciones',this)">Relaciones</span>
+          <span class="tag" onclick="filterIdeas('disciplina',this)">Disciplina</span>
+        </div>
+        <div id="ideas-list">
+          <div class="empty"><span class="empty-icon">💡</span>Sin ideas aún.</div>
+        </div>
+      </div>
+
+      <!-- ANALIZAR VIDEO -->
+      <div class="panel" id="panel-analizar">
+        <div class="card">
+          <div class="card-title">🔍 Analizar video de competencia</div>
+          <span class="label">Creador / cuenta</span>
+          <input id="an-creator" placeholder="Ej: @luigiurquiza, @alexhormozi_es...">
+          <span class="label">Transcripción o guión del video</span>
+          <textarea id="an-transcript" placeholder="Pega aquí lo que dice el video..." style="min-height:150px"></textarea>
+          <span class="label">Contexto (opcional)</span>
+          <input id="an-ctx" placeholder="Ej: 2M views, hombres 20-30, relationship content, TikTok">
+          <button class="btn btn-primary" onclick="analyzeVideo()">🔬 Analizar y guardar</button>
+        </div>
+        <div id="an-result" style="display:none" class="card">
+          <div class="card-title">📊 Análisis</div>
+          <div class="ai-out" id="an-out"></div>
+        </div>
+      </div>
+
+      <!-- SCRIPTS -->
+      <div class="panel" id="panel-scripts">
+        <div class="grid-2">
+          <div>
+            <div class="card">
+              <div class="card-title">✍️ Nuevo script</div>
+              <span class="label">Idea o tema</span>
+              <textarea id="sc-idea" placeholder="¿De qué trata el video? Copia una idea del banco o escribe aquí..." style="min-height:70px"></textarea>
+              <span class="label">¿Qué quieres comunicar?</span>
+              <textarea id="sc-message" placeholder="El mensaje principal que debe quedarse en la cabeza del espectador..." style="min-height:70px"></textarea>
+              <span class="label">Enfoque</span>
+              <select id="sc-focus">
+                <option value="historia">Historia personal</option>
+                <option value="opinion">Opinión directa</option>
+                <option value="confrontacion">Confrontación</option>
+                <option value="educativo">Educativo / Tip</option>
+                <option value="pregunta">Pregunta provocadora</option>
+              </select>
+              <span class="label">Objetivo</span>
+              <select id="sc-obj">
+                <option value="viralidad">Viralidad (shares, comentarios)</option>
+                <option value="opinion">Generar opinión / debate</option>
+                <option value="awareness">Awareness / que me conozcan</option>
+              </select>
+              <span class="label">Duración</span>
+              <select id="sc-dur">
+                <option value="60">60 segundos</option>
+                <option value="90" selected>90 segundos</option>
+                <option value="180">3 minutos</option>
+              </select>
+              <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="genScript()">✨ Generar script</button>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="height:100%">
+              <div class="card-title">🔀 Ángulos alternativos</div>
+              <div id="angles-out"><div style="font-size:13px;color:var(--text3);font-style:italic">Los ángulos aparecen después de generar el script.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            📄 Script generado
+            <button class="btn btn-sm" style="margin-left:auto" onclick="copyScript()">Copiar</button>
+            <button class="btn btn-sm" onclick="saveScript()">Guardar</button>
+          </div>
+          <div class="ai-out loading" id="sc-out">El script aparece aquí...</div>
+        </div>
+      </div>
+
+      <!-- MI VOZ -->
+      <div class="panel" id="panel-voz">
+        <div class="card">
+          <div class="card-title">🎙️ Mi voz — se usa en todos los scripts</div>
+          <span class="label">Quién soy</span>
+          <textarea id="v-who" placeholder="Ej: Soy Fernando, 23 años, creador de contenido mexicano. Documento mi proceso de vivir mis 20s..."></textarea>
+          <span class="label">Cómo hablo</span>
+          <textarea id="v-tone" placeholder="Ej: Hablo al mismo nivel que mi audiencia. Español mexicano natural. Directo pero no agresivo..."></textarea>
+          <span class="label">Lo que NO hago</span>
+          <textarea id="v-avoid" placeholder="Ej: Sin frases motivacionales genéricas. Sin lenguaje de LinkedIn. No soy el coach que da lecciones..."></textarea>
+          <span class="label">Mi audiencia</span>
+          <textarea id="v-aud" placeholder="Ej: Hombres mexicanos 18-28 que sienten que no tienen dirección, relaciones que no funcionan..."></textarea>
+          <button class="btn btn-primary" onclick="saveVoice()">💾 Guardar voz</button>
+          <span id="voice-ok" style="margin-left:10px;font-size:12px;color:var(--ok-text)"></span>
+        </div>
+      </div>
+
+      <!-- CONFIG -->
+      <div class="panel" id="panel-config">
+        <div class="card">
+          <div class="card-title">🔑 API Keys</div>
+          <span class="label">Claude API Key (Anthropic)</span>
+          <input id="claude-key" type="password" placeholder="sk-ant-...">
+          <div style="font-size:11px;color:var(--text3);margin-top:-0.5rem;margin-bottom:0.75rem">console.anthropic.com → API Keys</div>
+          <button class="btn btn-primary" onclick="saveKeys()">💾 Guardar</button>
+          <span id="keys-ok" style="margin-left:10px;font-size:12px;color:var(--ok-text)"></span>
+        </div>
+        <div class="card">
+          <div class="card-title">ℹ️ Privacidad</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.6">
+            Tu Claude API key se guarda en localStorage de este browser. Los datos (videos, ideas, scripts) se guardan en tu base de datos Supabase privada. Ningún dato sale a servidores de terceros excepto Anthropic (para generar texto) y Supabase (para guardar).
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+const SUPA_URL = 'https://rfdxajoaxpszhhhixgvf.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmZHhham9heHBzemhoaGl4Z3ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4Nzk4MjEsImV4cCI6MjA5NDQ1NTgyMX0.QoZKmkqRMVq5PejSesuAjL_DTixuyQsK2hAr7rTErVQ';
+
+const PANELS = {
+  calendario:  ['Calendario','2 videos por semana · objetivo 10k seguidores'],
+  sugerencias: ['Sugerencias IA','Basadas en tus videos e ideas guardadas'],
+  videos:      ['Videos analizados','Tu banco de referencia e inspiración'],
+  ideas:       ['Banco de ideas','Todo lo que se te ocurra, clasificado y analizado'],
+  analizar:    ['Analizar video','Pega la transcripción y la IA la desmembra'],
+  scripts:     ['Generador de scripts','Con tu voz, tu objetivo y tu enfoque'],
+  voz:         ['Mi voz','Configuración permanente · se usa en todos los scripts'],
+  config:      ['API Keys','Configuración de Anthropic'],
+};
+
+let currentWeek = 1;
+let currentIdeaFilter = 'todas';
+let allIdeas = [];
+let allVideos = [];
+
+// ─── SUPABASE ─────────────────────────────────────────────
+async function sb(method, table, body, query='') {
+  const url = `${SUPA_URL}/rest/v1/${table}${query}`;
+  const r = await fetch(url, {
+    method,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${SUPA_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!r.ok) throw new Error(await r.text());
+  const text = await r.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function sbGet(table, query='') { return sb('GET', table, null, query); }
+async function sbPost(table, body) { return sb('POST', table, body); }
+async function sbPatch(table, body, query) { return sb('PATCH', table, body, query); }
+async function sbDelete(table, query) { return sb('DELETE', table, null, query); }
+
+// ─── CLAUDE ───────────────────────────────────────────────
+function getKey() { return localStorage.getItem('fer_claude_key') || ''; }
+
+async function claude(prompt, useSearch=false) {
+  const key = getKey();
+  if (!key) { alert('Primero guarda tu Claude API Key en 🔑 API Keys'); throw new Error('No key'); }
+  const body = {
+    model: 'claude-sonnet-4-5',
+    max_tokens: 1500,
+    messages: [{ role: 'user', content: prompt }]
+  };
+  if (useSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify(body)
+  });
+  const data = await r.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content?.map(b => b.text || '').join('') || '';
+}
+
+function getVoice() {
+  const v = JSON.parse(localStorage.getItem('fer_voice') || '{}');
+  if (!v.who) return '';
+  return `\nVOZ DEL CREADOR:\nQuién soy: ${v.who}\nTono: ${v.tone}\nEvito: ${v.avoid}\nAudiencia: ${v.audience}`;
+}
+
+// ─── NAV ──────────────────────────────────────────────────
+function nav(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const [title, sub] = PANELS[id];
+  document.getElementById('topbar-title').textContent = title;
+  document.getElementById('topbar-sub').textContent = sub;
+  if (id === 'videos') loadVideos();
+  if (id === 'ideas') loadIdeas();
+  if (id === 'calendario') { loadCalSlots(); loadCalStats(); }
+  if (id === 'voz') loadVoice();
+  if (id === 'config') loadKeys();
+}
+
+// ─── TOAST ────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── MODAL ────────────────────────────────────────────────
+function openModal(title, html) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(e) { if (e.target === document.getElementById('modal-overlay')) closeModalBtn(); }
+function closeModalBtn() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// ─── CALENDARIO ───────────────────────────────────────────
+function changeWeek(d) {
+  currentWeek = Math.max(1, Math.min(52, currentWeek + d));
+  document.getElementById('week-label').textContent = 'Semana ' + currentWeek;
+  loadCalSlots();
+}
+
+async function loadCalSlots() {
+  const container = document.getElementById('cal-slots');
+  const days = ['Martes', 'Viernes'];
+  let html = '';
+  let slots = [];
+  try {
+    slots = await sbGet('calendar', `?week_number=eq.${currentWeek}&order=slot.asc`);
+  } catch(e) { slots = []; }
+
+  for (let i = 0; i < 2; i++) {
+    const s = (slots || []).find(x => x.slot === i) || {};
+    const done = s.status === 'publicado';
+    html += `<div class="cal-slot">
+      <div class="cal-slot-header">
+        <span class="cal-slot-day">Video ${i+1} · ${days[i]}</span>
+        <span class="badge ${done ? 'badge-ok' : 'badge-warn'}">${done ? 'Publicado' : 'Pendiente'}</span>
+      </div>
+      <input placeholder="Tema del video..." id="cslot-${i}" value="${s.topic || ''}" style="margin-bottom:8px">
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="saveCalSlot(${i}, '${s.id || ''}')">Guardar</button>
+        ${!done ? `<button class="btn btn-sm btn-primary" onclick="markCalDone(${i}, '${s.id || ''}')">✓ Publicado</button>` : ''}
+        <button class="btn btn-sm" onclick="slotToScript(${i})">Script →</button>
+      </div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+async function saveCalSlot(i, existingId) {
+  const topic = document.getElementById(`cslot-${i}`).value.trim();
+  if (!topic) return;
+  try {
+    if (existingId) {
+      await sbPatch('calendar', { topic }, `?id=eq.${existingId}`);
+    } else {
+      await sbPost('calendar', { week_number: currentWeek, slot: i, topic, status: 'pendiente' });
+    }
+    toast('Guardado ✓');
+    loadCalSlots();
+  } catch(e) { toast('Error al guardar'); }
+}
+
+async function markCalDone(i, existingId) {
+  const topic = document.getElementById(`cslot-${i}`).value.trim();
+  try {
+    if (existingId) {
+      await sbPatch('calendar', { status: 'publicado', published_at: new Date().toISOString() }, `?id=eq.${existingId}`);
+    } else {
+      await sbPost('calendar', { week_number: currentWeek, slot: i, topic, status: 'publicado', published_at: new Date().toISOString() });
+    }
+    toast('¡Video publicado! 🎉');
+    loadCalSlots();
+    loadCalStats();
+  } catch(e) { toast('Error'); }
+}
+
+async function loadCalStats() {
+  try {
+    const all = await sbGet('calendar');
+    const published = (all || []).filter(x => x.status === 'publicado').length;
+    const weekMap = {};
+    (all || []).filter(x => x.status === 'publicado').forEach(x => {
+      weekMap[x.week_number] = (weekMap[x.week_number] || 0) + 1;
+    });
+    let weeksDone = 0, racha = 0, rachaCurrent = 0;
+    for (let w = 1; w <= 52; w++) {
+      if ((weekMap[w] || 0) >= 2) { weeksDone++; rachaCurrent++; racha = Math.max(racha, rachaCurrent); }
+      else rachaCurrent = 0;
+    }
+    document.getElementById('cal-pub').textContent = published;
+    document.getElementById('cal-sem').textContent = weeksDone + '/52';
+    document.getElementById('cal-racha').textContent = rachaCurrent;
+    document.getElementById('wk-done').textContent = weeksDone;
+    document.getElementById('prog').style.width = Math.round(weeksDone / 52 * 100) + '%';
+  } catch(e) {}
+}
+
+function slotToScript(i) {
+  const topic = document.getElementById(`cslot-${i}`)?.value || '';
+  nav('scripts', document.querySelectorAll('.nav-item')[7]);
+  if (topic) document.getElementById('sc-idea').value = topic;
+}
+
+// ─── VIDEOS ───────────────────────────────────────────────
+async function loadVideos() {
+  try {
+    allVideos = await sbGet('videos', '?order=created_at.desc') || [];
+    renderVideos();
+    document.getElementById('videos-count').textContent = allVideos.length;
+  } catch(e) { toast('Error cargando videos'); }
+}
+
+function renderVideos() {
+  const el = document.getElementById('videos-list');
+  if (!allVideos.length) {
+    el.innerHTML = '<div class="empty"><span class="empty-icon">🎬</span>Sin videos aún. Analiza el primero.</div>';
+    return;
+  }
+  el.innerHTML = allVideos.map(v => `
+    <div class="video-card" onclick="showVideo('${v.id}')">
+      <div class="video-card-title">${v.creator || 'Sin nombre'}</div>
+      <div class="video-card-meta">
+        <span>${new Date(v.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})}</span>
+        ${v.hook ? `<span class="badge badge-info">Hook guardado</span>` : ''}
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.5">${(v.main_message||'').slice(0,120)}${(v.main_message||'').length>120?'...':''}</div>
+    </div>
+  `).join('');
+}
+
+function showVideo(id) {
+  const v = allVideos.find(x => x.id === id);
+  if (!v) return;
+  const html = `
+    <div class="modal-section"><div class="modal-section-title">🎣 Hook</div><div class="modal-body">${v.hook||'—'}</div></div>
+    <div class="modal-section"><div class="modal-section-title">📐 Estructura</div><div class="modal-body">${v.structure||'—'}</div></div>
+    <div class="modal-section"><div class="modal-section-title">🎯 Cierre</div><div class="modal-body">${v.closure||'—'}</div></div>
+    <div class="modal-section"><div class="modal-section-title">💬 Mensaje central</div><div class="modal-body">${v.main_message||'—'}</div></div>
+    <div class="modal-section"><div class="modal-section-title">⚡ Por qué funciona</div><div class="modal-body">${v.why_it_works||'—'}</div></div>
+    <div style="margin-top:1rem;display:flex;gap:8px">
+      <button class="btn btn-danger btn-sm" onclick="deleteVideo('${v.id}')">Eliminar</button>
+    </div>
+  `;
+  openModal(v.creator || 'Video analizado', html);
+}
+
+async function deleteVideo(id) {
+  if (!confirm('¿Eliminar este video?')) return;
+  try {
+    await sbDelete('videos', `?id=eq.${id}`);
+    closeModalBtn();
+    toast('Video eliminado');
+    loadVideos();
+  } catch(e) { toast('Error al eliminar'); }
+}
+
+// ─── ANALIZAR VIDEO ───────────────────────────────────────
+async function analyzeVideo() {
+  const creator = document.getElementById('an-creator').value.trim();
+  const transcript = document.getElementById('an-transcript').value.trim();
+  const ctx = document.getElementById('an-ctx').value.trim();
+  if (!transcript) { alert('Pega la transcripción primero'); return; }
+
+  const el = document.getElementById('an-out');
+  const card = document.getElementById('an-result');
+  card.style.display = 'block';
+  el.textContent = 'Analizando...'; el.classList.add('loading');
+
+  const prompt = `Analiza este video de contenido masculino / desarrollo personal para hombres jóvenes en México.
+${ctx ? 'Contexto: ' + ctx : ''}
+Creador: ${creator || 'desconocido'}
+
+TRANSCRIPCIÓN:
+${transcript}
+
+Responde en este formato JSON exacto (sin markdown, solo el JSON):
+{
+  "hook": "Los primeros 3 segundos exactos + por qué funcionan",
+  "structure": "Cómo fluye el video, qué técnica narrativa usa",
+  "closure": "Cómo termina y qué CTA usa",
+  "main_message": "La idea principal que queda en la cabeza",
+  "why_it_works": "2-3 factores clave por qué este video pega"
+}`;
+
+  try {
+    const raw = await claude(prompt);
+    let parsed;
+    try {
+      const clean = raw.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      parsed = { hook: raw, structure: '', closure: '', main_message: '', why_it_works: '' };
+    }
+
+    // Guardar en Supabase
+    await sbPost('videos', {
+      creator,
+      transcript,
+      hook: parsed.hook,
+      structure: parsed.structure,
+      closure: parsed.closure,
+      main_message: parsed.main_message,
+      why_it_works: parsed.why_it_works,
+      raw_analysis: raw
+    });
+
+    const display = `🎣 HOOK\n${parsed.hook}\n\n📐 ESTRUCTURA\n${parsed.structure}\n\n🎯 CIERRE\n${parsed.closure}\n\n💬 MENSAJE CENTRAL\n${parsed.main_message}\n\n⚡ POR QUÉ FUNCIONA\n${parsed.why_it_works}`;
+    el.textContent = display; el.classList.remove('loading');
+    toast('Video guardado en tu banco ✓');
+    document.getElementById('an-creator').value = '';
+    document.getElementById('an-transcript').value = '';
+    document.getElementById('an-ctx').value = '';
+  } catch(e) {
+    el.textContent = 'Error: ' + e.message; el.classList.remove('loading');
+  }
+}
+
+// ─── IDEAS ────────────────────────────────────────────────
+async function addIdea() {
+  const inp = document.getElementById('idea-inp');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  toast('Analizando idea...');
+
+  const prompt = `Clasifica esta idea para contenido de un creador mexicano de desarrollo personal masculino:
+
+"${text}"
+
+Responde en JSON exacto (sin markdown):
+{
+  "category": "una de: crecimiento | opiniones | retos | confrontacion | motivacion | relaciones | disciplina",
+  "potential": "alto | medio | bajo",
+  "angle": "El ángulo más potente para convertirla en video (1-2 oraciones)"
+}`;
+
+  try {
+    const raw = await claude(prompt);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    await sbPost('ideas', {
+      content: text,
+      category: parsed.category || 'crecimiento',
+      potential: parsed.potential || 'medio',
+      angle: parsed.angle || '',
+      status: 'nueva'
+    });
+    toast('Idea guardada ✓');
+    loadIdeas();
+  } catch(e) {
+    // Guardar sin análisis si falla
+    try {
+      await sbPost('ideas', { content: text, category: 'crecimiento', potential: 'medio', angle: '', status: 'nueva' });
+      toast('Idea guardada (sin análisis)');
+      loadIdeas();
+    } catch(e2) { toast('Error al guardar'); }
+  }
+}
+
+async function loadIdeas() {
+  try {
+    allIdeas = await sbGet('ideas', '?order=created_at.desc') || [];
+    renderIdeas();
+  } catch(e) { toast('Error cargando ideas'); }
+}
+
+function filterIdeas(cat, el) {
+  currentIdeaFilter = cat;
+  document.querySelectorAll('#cat-filters .tag').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderIdeas();
+}
+
+function renderIdeas() {
+  const list = document.getElementById('ideas-list');
+  const filtered = currentIdeaFilter === 'todas' ? allIdeas : allIdeas.filter(i => i.category === currentIdeaFilter);
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty"><span class="empty-icon">💡</span>Sin ideas en esta categoría.</div>';
+    return;
+  }
+  const potBadge = { alto: 'badge-ok', medio: 'badge-warn', bajo: 'badge-info' };
+  list.innerHTML = filtered.map(idea => `
+    <div class="idea-card">
+      <div class="idea-content">
+        <div class="idea-text">${idea.content}</div>
+        ${idea.angle ? `<div style="font-size:12px;color:var(--text2);margin-top:4px;font-style:italic">→ ${idea.angle}</div>` : ''}
+        <div class="idea-meta">
+          <span class="badge badge-info">${idea.category}</span>
+          <span class="badge ${potBadge[idea.potential]||'badge-info'}">Potencial ${idea.potential}</span>
+          <span>${new Date(idea.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</span>
+        </div>
+      </div>
+      <div class="idea-btns">
+        <button class="icon-btn" title="Hacer script" onclick="ideaToScript('${idea.id}')">✍️</button>
+        <button class="icon-btn" title="Eliminar" onclick="deleteIdea('${idea.id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function ideaToScript(id) {
+  const idea = allIdeas.find(i => i.id === id);
+  if (!idea) return;
+  nav('scripts', document.querySelectorAll('.nav-item')[7]);
+  document.getElementById('sc-idea').value = idea.content;
+  if (idea.angle) document.getElementById('sc-message').value = idea.angle;
+}
+
+async function deleteIdea(id) {
+  try {
+    await sbDelete('ideas', `?id=eq.${id}`);
+    toast('Idea eliminada');
+    loadIdeas();
+  } catch(e) { toast('Error'); }
+}
+
+// ─── SUGERENCIAS ──────────────────────────────────────────
+async function getSuggestions(mode='balanced') {
+  document.getElementById('sug-loading').style.display = 'block';
+  document.getElementById('sug-results').innerHTML = '';
+
+  try {
+    const videos = await sbGet('videos', '?order=created_at.desc&limit=10') || [];
+    const ideas = await sbGet('ideas', '?order=created_at.desc&limit=20') || [];
+
+    const videosCtx = videos.map(v => `- [${v.creator}] Hook: ${v.hook?.slice(0,80)} | Mensaje: ${v.main_message?.slice(0,80)}`).join('\n');
+    const ideasCtx = ideas.map(i => `- [${i.category}/${i.potential}] ${i.content}`).join('\n');
+    const voice = getVoice();
+
+    const modeCtx = mode === 'trending' ? 'Enfócate en ángulos con alto potencial viral, temas que generan debate o shares.'
+      : mode === 'deep' ? 'Enfócate en contenido más profundo, reflexivo, que genere conexión real con la audiencia.'
+      : 'Mezcla entre viralidad y profundidad.';
+
+    const prompt = `Eres un estratega de contenido para creadores mexicanos de desarrollo personal masculino.
+${voice}
+
+VIDEOS ANALIZADOS DE COMPETENCIA:
+${videosCtx || 'Sin videos aún.'}
+
+IDEAS EN EL BANCO:
+${ideasCtx || 'Sin ideas aún.'}
+
+${modeCtx}
+
+Genera 5 sugerencias de contenido concretas. Para cada una:
+1. Título / tema del video
+2. Por qué funcionaría con esta audiencia
+3. Hook de apertura (primeros 3 segundos)
+4. Formato recomendado
+
+Responde en JSON exacto (array de 5 objetos, sin markdown):
+[{"title":"...","why":"...","hook":"...","format":"..."}]`;
+
+    const raw = await claude(prompt);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const sugs = JSON.parse(clean);
+
+    document.getElementById('sug-loading').style.display = 'none';
+    document.getElementById('sug-results').innerHTML = sugs.map((s, i) => `
+      <div class="card">
+        <div class="card-title">${i+1}. ${s.title}</div>
+        <div class="sug-card">
+          <div class="sug-title">🎣 Hook</div>
+          <div class="sug-why">${s.hook}</div>
+        </div>
+        <div class="sug-card">
+          <div class="sug-title">💡 Por qué funciona</div>
+          <div class="sug-why">${s.why}</div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <span class="badge badge-info">${s.format}</span>
+          <button class="btn btn-sm" onclick="sugToScript('${encodeURIComponent(s.title)}','${encodeURIComponent(s.hook)}')">Hacer script →</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('sug-loading').style.display = 'none';
+    document.getElementById('sug-results').innerHTML = `<div class="card"><div class="ai-out">${e.message}</div></div>`;
+  }
+}
+
+function sugToScript(title, hook) {
+  nav('scripts', document.querySelectorAll('.nav-item')[7]);
+  document.getElementById('sc-idea').value = decodeURIComponent(title);
+  document.getElementById('sc-message').value = decodeURIComponent(hook);
+}
+
+// ─── SCRIPTS ──────────────────────────────────────────────
+async function genScript() {
+  const idea = document.getElementById('sc-idea').value.trim();
+  const message = document.getElementById('sc-message').value.trim();
+  const focus = document.getElementById('sc-focus').value;
+  const obj = document.getElementById('sc-obj').value;
+  const dur = document.getElementById('sc-dur').value;
+  if (!idea) { alert('Escribe la idea primero'); return; }
+
+  const el = document.getElementById('sc-out');
+  el.textContent = 'Generando script...'; el.classList.add('loading');
+  document.getElementById('angles-out').innerHTML = '<div style="font-size:13px;color:var(--text3);font-style:italic">Generando ángulos...</div>';
+
+  const voice = getVoice();
+  const prompt = `Eres asistente de contenido.${voice}
+
+Genera un script de TikTok/Reels en español mexicano coloquial.
+
+Idea: "${idea}"
+${message ? 'Mensaje a comunicar: "' + message + '"' : ''}
+Enfoque: ${focus}
+Objetivo: ${obj}
+Duración: ~${dur} segundos
+
+ESTRUCTURA:
+[HOOK - 3 segundos exactos]
+[DESARROLLO - fluido, sin bullets, como alguien hablando]
+[CIERRE + CTA]
+
+Después agrega:
+
+ÁNGULO 1 — [nombre del ángulo]:
+[hook alternativo]
+
+ÁNGULO 2 — [nombre del ángulo]:
+[hook alternativo]
+
+ÁNGULO 3 — [nombre del ángulo]:
+[hook alternativo]
+
+El script debe sonar como una persona hablando, no texto escrito.`;
+
+  try {
+    const r = await claude(prompt);
+    const parts = r.split(/ÁNGULO 1/);
+    el.textContent = parts[0].trim(); el.classList.remove('loading');
+
+    if (parts.length > 1) {
+      const full = 'ÁNGULO 1' + parts[1];
+      const matches = [...full.matchAll(/ÁNGULO (\d) — ([^\n]+)\n([\s\S]*?)(?=ÁNGULO \d|$)/g)];
+      document.getElementById('angles-out').innerHTML = matches.length
+        ? matches.map(m => `<div style="border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;margin-bottom:8px">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px">Ángulo ${m[1]} — ${m[2].trim()}</div>
+            <div style="font-size:13px;color:var(--text);line-height:1.5">${m[3].trim()}</div>
+          </div>`).join('')
+        : '<div style="font-size:13px;color:var(--text3)">No se generaron ángulos.</div>';
+    }
+  } catch(e) { el.textContent = 'Error: ' + e.message; el.classList.remove('loading'); }
+}
+
+async function saveScript() {
+  const idea = document.getElementById('sc-idea').value.trim();
+  const message = document.getElementById('sc-message').value.trim();
+  const focus = document.getElementById('sc-focus').value;
+  const obj = document.getElementById('sc-obj').value;
+  const content = document.getElementById('sc-out').textContent;
+  if (!content || content === 'El script aparece aquí...') return;
+  try {
+    await sbPost('scripts', { idea, message, focus, objective: obj, script_content: content });
+    toast('Script guardado ✓');
+  } catch(e) { toast('Error al guardar'); }
+}
+
+function copyScript() {
+  const text = document.getElementById('sc-out').textContent;
+  navigator.clipboard.writeText(text).then(() => toast('Script copiado ✓'));
+}
+
+// ─── VOZ ──────────────────────────────────────────────────
+function saveVoice() {
+  const v = {
+    who: document.getElementById('v-who').value,
+    tone: document.getElementById('v-tone').value,
+    avoid: document.getElementById('v-avoid').value,
+    audience: document.getElementById('v-aud').value
+  };
+  localStorage.setItem('fer_voice', JSON.stringify(v));
+  document.getElementById('voice-ok').textContent = '✓ Guardado';
+  toast('Voz guardada ✓');
+}
+
+function loadVoice() {
+  const v = JSON.parse(localStorage.getItem('fer_voice') || '{}');
+  document.getElementById('v-who').value = v.who || '';
+  document.getElementById('v-tone').value = v.tone || '';
+  document.getElementById('v-avoid').value = v.avoid || '';
+  document.getElementById('v-aud').value = v.audience || '';
+  if (v.who) document.getElementById('voice-ok').textContent = '✓ Guardado';
+}
+
+// ─── KEYS ─────────────────────────────────────────────────
+function saveKeys() {
+  const k = document.getElementById('claude-key').value.trim();
+  if (k) localStorage.setItem('fer_claude_key', k);
+  document.getElementById('keys-ok').textContent = '✓ Guardado';
+  toast('Key guardada ✓');
+}
+
+function loadKeys() {
+  const k = localStorage.getItem('fer_claude_key') || '';
+  if (k) { document.getElementById('claude-key').value = k; document.getElementById('keys-ok').textContent = '✓ Guardado'; }
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+loadCalStats();
+loadCalSlots();
+</script>
+</body>
+</html>
