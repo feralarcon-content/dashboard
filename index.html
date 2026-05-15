@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="favicon.ico">
 <title>Estudio Fer</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -295,6 +294,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
     <div class="nav-section">Principal</div>
     <button class="nav-item active" onclick="nav('calendario',this)">📅 Calendario</button>
     <button class="nav-item" onclick="nav('sugerencias',this)">🧠 Sugerencias IA</button>
+    <button class="nav-item" onclick="nav('insights',this)">📊 Insights</button>
     <div class="nav-section">Banco</div>
     <button class="nav-item" onclick="nav('videos',this)">🎬 Videos analizados</button>
     <button class="nav-item" onclick="nav('ideas',this)">💡 Banco de ideas</button>
@@ -571,6 +571,58 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
           <div class="empty"><span class="empty-icon">📚</span>Sin hooks aún. Genera algunos o analiza videos de competencia.</div>
         </div>
       </div>
+
+      <!-- INSIGHTS -->
+      <div class="panel" id="panel-insights">
+        <div class="card">
+          <div class="card-title">📊 Inteligencia acumulada</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:1rem">
+            Analiza todos tus videos e ideas guardadas para detectar patrones. Mientras más contenido tengas, mejores los insights.
+          </div>
+          <div class="row">
+            <button class="btn btn-primary" onclick="generateInsights()">🔄 Actualizar insights</button>
+            <span id="insights-last" style="font-size:11px;color:var(--text3);align-self:center"></span>
+          </div>
+        </div>
+
+        <div id="insights-loading" style="display:none" class="card">
+          <div class="ai-out loading">Analizando tu banco completo de videos e ideas...</div>
+        </div>
+
+        <div id="insights-content" style="display:none">
+          <!-- HOOKS PATTERNS -->
+          <div class="card">
+            <div class="card-title">🎣 Patrones de hooks más efectivos</div>
+            <div class="ai-out" id="insight-hooks"></div>
+          </div>
+          <!-- TOPICS -->
+          <div class="card">
+            <div class="card-title">🗂️ Temas más frecuentes en tu banco</div>
+            <div class="ai-out" id="insight-topics"></div>
+          </div>
+          <!-- STRUCTURES -->
+          <div class="card">
+            <div class="card-title">📐 Estructuras narrativas que más funcionan</div>
+            <div class="ai-out" id="insight-structures"></div>
+          </div>
+          <!-- GAPS -->
+          <div class="card">
+            <div class="card-title">🔍 Ángulos vírgenes — lo que nadie está tocando</div>
+            <div class="ai-out" id="insight-gaps"></div>
+          </div>
+          <!-- RECOMMENDATIONS -->
+          <div class="card">
+            <div class="card-title">🎯 Recomendaciones personalizadas para ti</div>
+            <div class="ai-out" id="insight-recs"></div>
+          </div>
+        </div>
+
+        <div id="insights-empty" class="empty">
+          <span class="empty-icon">📊</span>
+          Dale "Actualizar insights" para analizar tu banco.<br>
+          <span style="font-size:11px;margin-top:4px;display:block">Necesitas al menos 3 videos o ideas guardadas.</span>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -590,6 +642,7 @@ const PANELS = {
   voz:         ['Mi voz','Configuración permanente · se usa en todos los scripts'],
   config:      ['API Keys','Configuración de Anthropic'],
   hooks:       ['Hook Generator','Genera 10 hooks distintos para cualquier tema'],
+  insights:    ['Insights','Patrones detectados en tu banco de videos e ideas'],
   biblioteca:  ['Biblioteca de hooks','Tu arsenal de hooks guardados'],
 };
 
@@ -672,6 +725,7 @@ function nav(id, btn) {
   if (id === 'config') loadKeys();
   if (id === 'biblioteca') loadBiblioteca();
   if (id === 'hooks') initHookMechanisms();
+  if (id === 'insights') loadInsights();
 }
 
 // ─── TOAST ────────────────────────────────────────────────
@@ -872,7 +926,7 @@ Responde en este formato JSON exacto (sin markdown, solo el JSON):
     }
 
     // Guardar en Supabase
-    await sbPost('videos', {
+    const videoId = await sbPost('videos', {
       creator,
       transcript,
       hook: parsed.hook,
@@ -886,6 +940,7 @@ Responde en este formato JSON exacto (sin markdown, solo el JSON):
     const display = `🎣 HOOK\n${parsed.hook}\n\n📐 ESTRUCTURA\n${parsed.structure}\n\n🎯 CIERRE\n${parsed.closure}\n\n💬 MENSAJE CENTRAL\n${parsed.main_message}\n\n⚡ POR QUÉ FUNCIONA\n${parsed.why_it_works}`;
     el.textContent = display; el.classList.remove('loading');
     toast('Video guardado en tu banco ✓');
+    generateVideoSummary(parsed, videoId[0].id);
     document.getElementById('an-creator').value = '';
     document.getElementById('an-transcript').value = '';
     document.getElementById('an-ctx').value = '';
@@ -1002,9 +1057,13 @@ async function getSuggestions(mode='balanced') {
     const videos = await sbGet('videos', '?order=created_at.desc&limit=10') || [];
     const ideas = await sbGet('ideas', '?order=created_at.desc&limit=20') || [];
 
-    const videosCtx = videos.map(v => `- [${v.creator}] Hook: ${v.hook?.slice(0,80)} | Mensaje: ${v.main_message?.slice(0,80)}`).join('\n');
-    const ideasCtx = ideas.map(i => `- [${i.category}/${i.potential}] ${i.content}`).join('\n');
+    // Use summaries for videos — much cheaper
+    const videosCtx = videos.map(v =>
+      `- [${v.creator||'?'}] ${v.summary || ('Hook: ' + (v.hook||'').slice(0,80) + ' | Msg: ' + (v.main_message||'').slice(0,60))}`
+    ).join('\n');
+    const ideasCtx = ideas.map(i => `- [${i.category}/${i.potential}] ${i.content.slice(0,80)}`).join('\n');
     const voice = getVoice();
+    const insightsCtx = await getInsightsContext();
 
     const modeCtx = mode === 'trending' ? 'Enfócate en ángulos con alto potencial viral, temas que generan debate o shares.'
       : mode === 'deep' ? 'Enfócate en contenido más profundo, reflexivo, que genere conexión real con la audiencia.'
@@ -1018,6 +1077,7 @@ ${videosCtx || 'Sin videos aún.'}
 
 IDEAS EN EL BANCO:
 ${ideasCtx || 'Sin ideas aún.'}
+${insightsCtx}
 
 ${modeCtx}
 
@@ -1304,6 +1364,144 @@ async function deleteHook(id) {
   } catch(e) { toast('Error'); }
 }
 
+
+
+// ─── SUMMARIES & INSIGHTS ─────────────────────────────────
+
+async function generateVideoSummary(parsed, videoId) {
+  // Generate a compact 2-line summary for pattern detection
+  try {
+    const summary = `Hook: ${(parsed.hook||'').slice(0,80)} | Estructura: ${(parsed.structure||'').slice(0,60)} | Por qué funciona: ${(parsed.why_it_works||'').slice(0,80)}`;
+    await sbPatch('videos', { summary }, '?id=eq.' + videoId);
+  } catch(e) { console.log('Summary error:', e); }
+}
+
+async function loadInsights() {
+  document.getElementById('insights-empty').style.display = 'none';
+  try {
+    const saved = await sbGet('insights', '?type=eq.master&order=updated_at.desc&limit=1');
+    if (saved && saved.length > 0) {
+      const ins = saved[0];
+      const data = ins.data || {};
+      showInsights(data);
+      document.getElementById('insights-last').textContent = 'Último análisis: ' + new Date(ins.updated_at).toLocaleDateString('es-MX', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    } else {
+      document.getElementById('insights-empty').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('insights-empty').style.display = 'block';
+  }
+}
+
+function showInsights(data) {
+  document.getElementById('insights-content').style.display = 'block';
+  document.getElementById('insights-empty').style.display = 'none';
+  document.getElementById('insight-hooks').textContent = data.hooks || '—';
+  document.getElementById('insight-topics').textContent = data.topics || '—';
+  document.getElementById('insight-structures').textContent = data.structures || '—';
+  document.getElementById('insight-gaps').textContent = data.gaps || '—';
+  document.getElementById('insight-recs').textContent = data.recommendations || '—';
+}
+
+async function generateInsights() {
+  const loading = document.getElementById('insights-loading');
+  const content = document.getElementById('insights-content');
+  const empty = document.getElementById('insights-empty');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  empty.style.display = 'none';
+
+  try {
+    // Fetch all data — use summaries when available to save tokens
+    const videos = await sbGet('videos', '?order=created_at.desc&limit=100') || [];
+    const ideas = await sbGet('ideas', '?order=created_at.desc&limit=100') || [];
+
+    if (videos.length + ideas.length < 3) {
+      loading.style.display = 'none';
+      empty.style.display = 'block';
+      toast('Necesitas al menos 3 videos o ideas guardadas');
+      return;
+    }
+
+    // Use summaries if available, otherwise use key fields — compact format
+    const videosCtx = videos.map((v, i) =>
+      `V${i+1}. [${v.creator||'?'}] ${v.summary || ('Hook: ' + (v.hook||'').slice(0,60) + ' | Msg: ' + (v.main_message||'').slice(0,60))}`
+    ).join('
+');
+
+    const ideasCtx = ideas.map((id, i) =>
+      `I${i+1}. [${id.category}/${id.potential}] ${id.content.slice(0,80)}${id.angle ? ' → ' + id.angle.slice(0,60) : ''}`
+    ).join('
+');
+
+    const voice = getVoice();
+
+    const prompt = `Eres un estratega de contenido. Analiza este banco de datos de un creador mexicano de desarrollo personal masculino (hombres 18-28).
+${voice}
+
+VIDEOS ANALIZADOS (${videos.length}):
+${videosCtx}
+
+IDEAS EN BANCO (${ideas.length}):
+${ideasCtx}
+
+Detecta patrones reales. Responde en JSON exacto (sin markdown):
+{
+  "hooks": "¿Qué tipos de hooks aparecen más? ¿Qué mecanismos psicológicos usan los mejores? 3-5 patrones concretos.",
+  "topics": "¿Qué temas dominan el banco? ¿Cuáles tienen más potencial sin explotar? Lista con frecuencia estimada.",
+  "structures": "¿Qué estructuras narrativas se repiten? ¿Cuál es la más efectiva basada en los datos?",
+  "gaps": "¿Qué ángulos NO está tocando nadie en este banco pero tienen alto potencial para este nicho?",
+  "recommendations": "Top 3 acciones concretas que este creador debería tomar basándose en todos estos datos."
+}`;
+
+    const raw = await claude(prompt);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const data = JSON.parse(clean);
+
+    // Save or update insights
+    const existing = await sbGet('insights', '?type=eq.master&limit=1');
+    if (existing && existing.length > 0) {
+      await sbPatch('insights', {
+        content: 'Master insights',
+        data,
+        updated_at: new Date().toISOString()
+      }, '?type=eq.master');
+    } else {
+      await sbPost('insights', {
+        type: 'master',
+        content: 'Master insights',
+        data
+      });
+    }
+
+    loading.style.display = 'none';
+    showInsights(data);
+    document.getElementById('insights-last').textContent = 'Actualizado ahora';
+    toast('Insights actualizados ✓');
+
+  } catch(e) {
+    loading.style.display = 'none';
+    document.getElementById('insights-content').style.display = 'block';
+    document.getElementById('insight-hooks').textContent = 'Error: ' + e.message;
+    toast('Error al generar insights');
+  }
+}
+
+// Inject insights into suggestions for better quality
+async function getInsightsContext() {
+  try {
+    const saved = await sbGet('insights', '?type=eq.master&limit=1');
+    if (saved && saved.length > 0) {
+      const d = saved[0].data || {};
+      return `
+INSIGHTS ACUMULADOS:
+Patrones de hooks: ${d.hooks||''}
+Temas frecuentes: ${d.topics||''}
+Ángulos vírgenes: ${d.gaps||''}`;
+    }
+  } catch(e) {}
+  return '';
+}
 
 // ─── MOBILE ───────────────────────────────────────────────
 function isMobile() { return window.innerWidth <= 768; }
