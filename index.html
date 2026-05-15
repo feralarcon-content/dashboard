@@ -273,9 +273,6 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
 
   <!-- BOTTOM NAV (mobile only) -->
   <nav class="bottom-nav">
-    <button class="bottom-nav-item active" id="bn-calendario" onclick="nav('calendario',this);closeMobileMenus()">
-      <span class="nav-icon">📅</span>Calendario
-    </button>
     <button class="bottom-nav-item" id="bn-ideas" onclick="nav('ideas',this);closeMobileMenus()">
       <span class="nav-icon">💡</span>Ideas
     </button>
@@ -321,7 +318,6 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
       <div class="logo-sub">Tu herramienta de contenido</div>
     </div>
     <div class="nav-section">Principal</div>
-    <button class="nav-item active" onclick="nav('calendario',this)">📅 Calendario</button>
     <button class="nav-item" onclick="nav('sugerencias',this)">🧠 Sugerencias IA</button>
     <button class="nav-item" onclick="nav('insights',this)">📊 Insights</button>
     <div class="nav-section">Banco</div>
@@ -334,7 +330,6 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
     <button class="nav-item" onclick="nav('biblioteca',this)">📚 Biblioteca de hooks</button>
     <div class="nav-section">Config</div>
     <button class="nav-item" onclick="nav('voz',this)">🎙️ Mi voz</button>
-    <button class="nav-item" onclick="nav('evolucion',this)">🧬 Evolución</button>
     <button class="nav-item" onclick="nav('config',this)">🔑 API Keys</button>
   </aside>
 
@@ -342,15 +337,15 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
   <main class="main">
     <div class="topbar">
       <div>
-        <div class="topbar-title" id="topbar-title">Calendario</div>
-        <div class="topbar-sub" id="topbar-sub">2 videos por semana · objetivo 10k seguidores</div>
+        <div class="topbar-title" id="topbar-title">Sugerencias IA</div>
+        <div class="topbar-sub" id="topbar-sub">Basadas en tus videos e ideas guardadas</div>
       </div>
       <div id="topbar-right"></div>
     </div>
     <div class="content">
 
       <!-- CALENDARIO -->
-      <div class="panel active" id="panel-calendario">
+      <div class="panel" id="panel-calendario">
         <div class="grid-3">
           <div class="metric"><div class="metric-val" id="cal-pub">0</div><div class="metric-label">Videos publicados</div></div>
           <div class="metric"><div class="metric-val" id="cal-sem">0/52</div><div class="metric-label">Semanas completas</div></div>
@@ -376,7 +371,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
       </div>
 
       <!-- SUGERENCIAS IA -->
-      <div class="panel" id="panel-sugerencias">
+      <div class="panel active" id="panel-sugerencias">
         <div class="card">
           <div class="card-title">🧠 Sugerencias basadas en tu banco</div>
           <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
@@ -690,7 +685,6 @@ const SUPA_URL = 'https://rfdxajoaxpszhhhixgvf.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmZHhham9heHBzemhoaGl4Z3ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4Nzk4MjEsImV4cCI6MjA5NDQ1NTgyMX0.QoZKmkqRMVq5PejSesuAjL_DTixuyQsK2hAr7rTErVQ';
 
 const PANELS = {
-  calendario:  ['Calendario','2 videos por semana · objetivo 10k seguidores'],
   sugerencias: ['Sugerencias IA','Basadas en tus videos e ideas guardadas'],
   videos:      ['Videos analizados','Tu banco de referencia e inspiración'],
   ideas:       ['Banco de ideas','Todo lo que se te ocurra, clasificado y analizado'],
@@ -700,7 +694,6 @@ const PANELS = {
   config:      ['API Keys','Configuración de Anthropic'],
   hooks:       ['Hook Generator','Genera 10 hooks distintos para cualquier tema'],
   insights:    ['Insights','Patrones detectados en tu banco de videos e ideas'],
-  evolucion:   ['Evolución de voz','Historial de aprendizaje y feedbacks procesados'],
   biblioteca:  ['Biblioteca de hooks','Tu arsenal de hooks guardados'],
 };
 
@@ -784,7 +777,6 @@ function nav(id, btn) {
   if (id === 'biblioteca') loadBiblioteca();
   if (id === 'hooks') initHookMechanisms();
   if (id === 'insights') loadInsights();
-  if (id === 'evolucion') loadEvolution();
 }
 
 // ─── TOAST ────────────────────────────────────────────────
@@ -1835,8 +1827,7 @@ document.addEventListener('click', function(e) {
 });
 
 // ─── INIT ─────────────────────────────────────────────────
-loadCalStats();
-loadCalSlots();
+
 </script>
 </body>
 </html>
