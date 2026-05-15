@@ -146,9 +146,89 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
 @media(max-width:768px){
   body{overflow:auto;height:auto}
   .app{flex-direction:column;height:100vh;overflow:hidden}
+
+  /* Hide desktop sidebar */
   .sidebar{display:none}
 
   /* Bottom nav */
+  .bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    background:var(--bg);border-top:1px solid var(--border);
+    z-index:50;padding:0;height:60px;
+  }
+  .bottom-nav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:2px;border:none;background:none;
+    cursor:pointer;font-family:var(--font);font-size:10px;
+    color:var(--text3);padding:8px 4px;transition:color .12s;
+  }
+  .bottom-nav-item.active{color:var(--text);font-weight:600}
+  .bottom-nav-item .nav-icon{font-size:20px}
+
+  /* More menu */
+  .more-menu{
+    display:none;position:fixed;bottom:60px;left:0;right:0;
+    background:var(--bg);border-top:1px solid var(--border);
+    z-index:49;padding:.75rem;
+    grid-template-columns:1fr 1fr;gap:8px;
+  }
+  .more-menu.open{display:grid}
+  .more-menu-item{
+    display:flex;align-items:center;gap:8px;padding:10px 12px;
+    border:1px solid var(--border);border-radius:var(--rs);
+    background:none;cursor:pointer;font-family:var(--font);
+    font-size:13px;color:var(--text);
+  }
+  .more-menu-item:active{background:var(--bg2)}
+
+  /* Main adjustments */
+  .main{overflow:hidden;flex:1}
+  .topbar{padding:.75rem 1rem}
+  .topbar-title{font-size:15px}
+  .topbar-sub{font-size:11px}
+  .content{padding:1rem;padding-bottom:80px;overflow-y:auto;height:calc(100vh - 120px)}
+
+  /* Grids → single col on mobile */
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .cal-grid{grid-template-columns:1fr}
+
+  /* Cards */
+  .card{padding:1rem}
+
+  /* Buttons full width on mobile forms */
+  .mobile-full{width:100%;justify-content:center}
+
+  /* Fab button for quick idea */
+  .fab{
+    display:flex;position:fixed;bottom:70px;right:1rem;
+    width:52px;height:52px;border-radius:50%;
+    background:var(--text);color:var(--bg);
+    border:none;cursor:pointer;font-size:22px;
+    align-items:center;justify-content:center;
+    box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:48;
+  }
+
+  /* Quick capture sheet */
+  .quick-sheet{
+    display:none;position:fixed;bottom:60px;left:0;right:0;
+    background:var(--bg);border-top:1px solid var(--border);
+    border-radius:16px 16px 0 0;z-index:51;padding:1.25rem;
+    box-shadow:0 -4px 24px rgba(0,0,0,.1);
+  }
+  .quick-sheet.open{display:block}
+  .sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 1rem}
+}
+
+@media(min-width:769px){
+  .bottom-nav,.more-menu,.fab,.quick-sheet{display:none!important}
+}
+
+/* ─── MOBILE ─────────────────────────────────────────────── */
+@media(max-width:768px){
+  body{overflow:auto;height:auto}
+  .app{flex-direction:column;height:100vh;overflow:hidden}
+  .sidebar{display:none}
+
   .bottom-nav{
     display:flex;position:fixed;bottom:0;left:0;right:0;
     background:var(--bg);border-top:1px solid var(--border);
@@ -158,93 +238,64 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
     flex:1;display:flex;flex-direction:column;align-items:center;
     justify-content:center;gap:1px;border:none;background:none;
     cursor:pointer;font-family:var(--font);font-size:9px;
-    color:var(--text3);padding:6px 2px;transition:color .12s;
+    color:var(--text3);padding:6px 2px;
+    -webkit-tap-highlight-color:transparent;
   }
   .bottom-nav-item.active{color:var(--text);font-weight:600}
-  .bottom-nav-item .nav-icon{font-size:22px;line-height:1}
+  .bottom-nav-item .nav-icon{font-size:21px;line-height:1}
 
-  /* More menu */
   .more-menu{
     display:none;position:fixed;bottom:58px;left:0;right:0;
     background:var(--bg);border-top:1px solid var(--border);
-    z-index:49;padding:.75rem;
-    grid-template-columns:1fr 1fr;gap:8px;
+    z-index:49;padding:.75rem;grid-template-columns:1fr 1fr;gap:8px;
   }
   .more-menu.open{display:grid}
   .more-menu-item{
     display:flex;align-items:center;gap:8px;padding:12px;
     border:1px solid var(--border);border-radius:var(--rs);
     background:none;cursor:pointer;font-family:var(--font);
-    font-size:13px;color:var(--text);-webkit-tap-highlight-color:transparent;
+    font-size:13px;color:var(--text);
+    -webkit-tap-highlight-color:transparent;
   }
   .more-menu-item:active{background:var(--bg2)}
 
-  /* Main */
   .main{overflow:hidden;flex:1}
-  .topbar{padding:.75rem 1rem;min-height:56px}
+  .topbar{padding:.75rem 1rem;min-height:52px}
   .topbar-title{font-size:15px}
-  .topbar-sub{font-size:11px;display:none}
+  .topbar-sub{display:none}
   .content{
-    padding:.875rem;
-    padding-bottom:75px;
-    overflow-y:auto;
-    height:calc(100vh - 56px);
+    padding:.875rem;padding-bottom:72px;
+    overflow-y:auto;height:calc(100vh - 52px);
     -webkit-overflow-scrolling:touch;
   }
 
-  /* Grids → single col */
-  .grid-2,.grid-3,.cal-grid,.pipeline-grid{grid-template-columns:1fr!important}
-
-  /* Cards */
+  .grid-2,.grid-3{grid-template-columns:1fr}
   .card{padding:.875rem;margin-bottom:.75rem}
-  .card-title{font-size:13px;margin-bottom:.75rem}
 
-  /* Inputs larger touch targets */
-  input,textarea,select{
-    font-size:16px!important;/* prevents iOS zoom */
-    padding:10px 12px;
-  }
-  textarea{min-height:90px}
+  input,textarea,select{font-size:16px!important;padding:10px 12px}
+  textarea{min-height:80px}
 
-  /* Buttons */
   .btn{padding:9px 14px;font-size:13px}
-  .btn-sm{padding:8px 12px;font-size:12px}
+  .btn-sm{padding:7px 11px;font-size:12px}
 
-  /* Script output readable */
-  .ai-out{font-size:13px;line-height:1.75;padding:.875rem}
+  .ai-out{font-size:13px;line-height:1.75}
 
-  /* Script panel — stack vertically */
   #panel-scripts .grid-2{display:flex;flex-direction:column;gap:.75rem}
 
-  /* Hide angles on mobile to save space — show below script */
-  #angles-out{font-size:13px}
+  .metric-val{font-size:18px}
+  .metric{padding:.75rem}
 
-  /* Video cards */
-  .video-card{padding:.875rem}
+  .modal-overlay{align-items:flex-end}
+  .modal{width:100%;max-width:100%;border-radius:16px 16px 0 0;max-height:88vh;margin:0}
 
-  /* Idea cards */
-  .idea-card{padding:.875rem}
-  .idea-btns{flex-direction:column}
-
-  /* Tags wrap */
-  .tag{font-size:11px;padding:5px 10px;margin:3px}
-
-  /* Script buttons row — wrap */
-  .card-title{flex-wrap:wrap;gap:6px}
-  .card-title .btn-sm{margin-left:0!important}
-
-  /* FAB */
   .fab{
-    display:flex;position:fixed;bottom:68px;right:1rem;
+    display:flex!important;position:fixed;bottom:68px;right:1rem;
     width:50px;height:50px;border-radius:50%;
-    background:var(--text);color:var(--bg);
-    border:none;cursor:pointer;font-size:24px;
-    align-items:center;justify-content:center;
+    background:var(--text);color:var(--bg);border:none;
+    cursor:pointer;font-size:24px;align-items:center;justify-content:center;
     box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:48;
     -webkit-tap-highlight-color:transparent;
   }
-
-  /* Quick sheet */
   .quick-sheet{
     display:none;position:fixed;bottom:58px;left:0;right:0;
     background:var(--bg);border-top:1px solid var(--border);
@@ -254,25 +305,12 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
   .quick-sheet.open{display:block}
   .sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 1rem}
 
-  /* Modal full screen on mobile */
-  .modal-overlay{align-items:flex-end}
-  .modal{
-    width:100%;max-width:100%;border-radius:16px 16px 0 0;
-    max-height:85vh;margin:0;
-  }
-
-  /* Metrics smaller */
-  .metric-val{font-size:18px}
-  .metric{padding:.75rem}
-
-  /* Hook mechanisms wrap nicely */
-  #hook-mechanisms{display:flex;flex-wrap:wrap;gap:4px}
+  .card-title{flex-wrap:wrap;gap:5px}
+  .idea-btns{flex-direction:column}
+  .tag{font-size:11px;padding:5px 10px;margin:2px}
 }
-
 @media(min-width:769px){
   .bottom-nav,.more-menu,.fab,.quick-sheet{display:none!important}
-}
-
 }
 </style>
 </head>
@@ -281,32 +319,27 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-
 <!-- FEEDBACK MODAL -->
-<div class="modal-overlay" id="feedback-overlay" onclick="closeFeedbackModal(event)">
-  <div class="modal" style="max-width:560px">
+<div class="modal-overlay" id="feedback-overlay" onclick="if(event.target===this)closeFeedbackModal()">
+  <div class="modal" style="max-width:540px">
     <div class="modal-title">
       💬 Feedback al script
       <button class="btn btn-sm" onclick="closeFeedbackModal()">✕</button>
     </div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
-      Tu feedback se guarda y entrena tu perfil. Mientras más des, más te conoce la IA.
-    </div>
-    <span class="label">¿Qué estuvo bien? ¿Qué cambiarías?</span>
-    <textarea id="fb-general" placeholder="Ej: La estructura me encantó pero suena muy formal. Yo nunca digo 'carnal' ni 'wey'..." style="min-height:90px"></textarea>
-    <span class="label">Palabras / frases que NO uso</span>
-    <input id="fb-avoid" placeholder="Ej: carnal, wey, nel, la neta, raza">
-    <span class="label">Palabras / frases que SÍ uso</span>
-    <input id="fb-use" placeholder="Ej: güey, cuate, qué onda, en serio, literal">
-    <span class="label">Notas sobre estructura o tono</span>
-    <input id="fb-structure" placeholder="Ej: prefiero abrir con pregunta, cierres más cortos, menos agresivo">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">Tu feedback entrena tu perfil invisible. Mientras más des, más te conoce la IA.</p>
+    <span class="label">¿Qué cambiarías? ¿Qué estuvo bien?</span>
+    <textarea id="fb-general" placeholder="Ej: La estructura me encantó pero suena muy formal..." style="min-height:80px"></textarea>
+    <span class="label">Palabras que NO uso</span>
+    <input id="fb-avoid" placeholder="Ej: carnal, nel, la neta, raza">
+    <span class="label">Palabras que SÍ uso</span>
+    <input id="fb-use" placeholder="Ej: güey, en serio, literal, o sea">
+    <span class="label">Notas de tono o estructura</span>
+    <input id="fb-structure" placeholder="Ej: prefiero abrir con pregunta, cierres más cortos">
     <div style="display:flex;gap:8px;margin-top:.5rem">
       <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveFeedback()">💾 Guardar y entrenar</button>
       <button class="btn" onclick="closeFeedbackModal()">Cancelar</button>
     </div>
-    <div id="fb-processing" style="display:none;margin-top:.75rem;font-size:12px;color:var(--text3);font-style:italic">
-      Actualizando tu perfil de voz...
-    </div>
+    <div id="fb-processing" style="display:none;margin-top:.75rem;font-size:12px;color:var(--text3);font-style:italic">Actualizando tu perfil...</div>
   </div>
 </div>
 
@@ -325,6 +358,9 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
 
   <!-- BOTTOM NAV (mobile only) -->
   <nav class="bottom-nav">
+    <button class="bottom-nav-item active" id="bn-calendario" onclick="nav('calendario',this);closeMobileMenus()">
+      <span class="nav-icon">📅</span>Calendario
+    </button>
     <button class="bottom-nav-item" id="bn-ideas" onclick="nav('ideas',this);closeMobileMenus()">
       <span class="nav-icon">💡</span>Ideas
     </button>
@@ -397,7 +433,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
     <div class="content">
 
       <!-- CALENDARIO -->
-      <div class="panel" id="panel-calendario">
+      <div class="panel active" id="panel-calendario">
         <div class="grid-3">
           <div class="metric"><div class="metric-val" id="cal-pub">0</div><div class="metric-label">Videos publicados</div></div>
           <div class="metric"><div class="metric-val" id="cal-sem">0/52</div><div class="metric-label">Semanas completas</div></div>
@@ -520,9 +556,9 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
               </select>
               <span class="label">Duración</span>
               <select id="sc-dur">
+                <option value="30">30 segundos</option>
+                <option value="45" selected>45 segundos</option>
                 <option value="60">60 segundos</option>
-                <option value="90" selected>90 segundos</option>
-                <option value="180">3 minutos</option>
               </select>
               <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="genScript()">✨ Generar script</button>
             </div>
@@ -539,7 +575,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
             📄 Script generado
             <button class="btn btn-sm" style="margin-left:auto" onclick="copyScript()">Copiar</button>
             <button class="btn btn-sm" onclick="saveScript()">Guardar</button>
-            <button class="btn btn-sm" style="background:var(--info-bg);color:var(--info-text);border-color:var(--info-bg)" onclick="openFeedbackModal()">💬 Dar feedback</button>
+            <button class="btn btn-sm" style="background:var(--info-bg);color:var(--info-text);border-color:transparent" onclick="openFeedbackModal()">💬 Feedback</button>
           </div>
           <div class="ai-out loading" id="sc-out">El script aparece aquí...</div>
         </div>
@@ -702,42 +738,13 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
         </div>
       </div>
 
-      <!-- EVOLUCIÓN -->
-      <div class="panel" id="panel-evolucion">
-        <div class="grid-3">
-          <div class="metric"><div class="metric-val" id="evo-feedbacks">0</div><div class="metric-label">Feedbacks dados</div></div>
-          <div class="metric"><div class="metric-val" id="evo-version">v1</div><div class="metric-label">Versión de tu voz</div></div>
-          <div class="metric"><div class="metric-val" id="evo-pending">0</div><div class="metric-label">Pendientes de procesar</div></div>
-        </div>
-        <div class="card">
-          <div class="card-title">🧬 Perfil aprendido</div>
-          <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
-            Lo que la IA ha aprendido sobre ti a través de tus feedbacks. Esto se inyecta automáticamente en cada script.
-          </div>
-          <div class="ai-out" id="evo-learned" style="min-height:120px">Aún no hay patrones aprendidos. Da feedback a tus scripts para entrenar tu perfil.</div>
-        </div>
-        <div class="card">
-          <div class="card-title">📋 Historial de feedbacks</div>
-          <div id="evo-history"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">🔄 Reentrenar perfil</div>
-          <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
-            Procesa todos los feedbacks pendientes y actualiza tu perfil de voz automáticamente.
-          </div>
-          <button class="btn btn-primary" onclick="retrainVoice()">⚡ Reentrenar ahora</button>
-        </div>
-      </div>
-
       <!-- SCRIPTS GUARDADOS -->
       <div class="panel" id="panel-scripts_guardados">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
           <div style="font-size:13px;color:var(--text2)">Scripts guardados: <strong id="sg-count">0</strong></div>
-          <button class="btn btn-primary btn-sm" onclick="nav('scripts', document.querySelectorAll('.nav-item')[2])">+ Nuevo script</button>
+          <button class="btn btn-primary btn-sm" onclick="nav('scripts',document.querySelector('.nav-item.active'))">+ Nuevo</button>
         </div>
-        <div id="sg-list">
-          <div class="empty"><span class="empty-icon">📁</span>Sin scripts guardados aún.</div>
-        </div>
+        <div id="sg-list"><div class="empty"><span class="empty-icon">📁</span>Sin scripts guardados aún.</div></div>
       </div>
     </div>
   </main>
@@ -839,9 +846,8 @@ function nav(id, btn) {
   if (id === 'calendario') { loadCalSlots(); loadCalStats(); }
   if (id === 'voz') loadVoice();
   if (id === 'config') loadKeys();
-  if (id === 'biblioteca') loadBiblioteca();
-  if (id === 'scripts_guardados') loadScriptsGuardados();
   if (id === 'hooks') initHookMechanisms();
+  if (id === 'scripts_guardados') loadScriptsGuardados();
   if (id === 'insights') loadInsights();
 }
 
@@ -1058,7 +1064,7 @@ Responde en este formato JSON exacto (sin markdown, solo el JSON):
     el.textContent = display; el.classList.remove('loading');
     toast('Video guardado en tu banco ✓');
     generateVideoSummary(parsed, videoId[0].id);
-    learn('video_analyzed', { creator, hook: parsed.hook, why: parsed.why_it_works });
+    learn('video_analyzed',{creator,hook:parsed.hook,why:parsed.why_it_works});
     document.getElementById('an-creator').value = '';
     document.getElementById('an-transcript').value = '';
     document.getElementById('an-ctx').value = '';
@@ -1090,7 +1096,7 @@ Responde en JSON exacto (sin markdown):
     const raw = await claude(prompt);
     const clean = raw.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
-    await sbPost('ideas', {
+    const savedIdea = await sbPost('ideas', {
       content: text,
       category: parsed.category || 'crecimiento',
       potential: parsed.potential || 'medio',
@@ -1098,7 +1104,7 @@ Responde en JSON exacto (sin markdown):
       status: 'nueva'
     });
     toast('Idea guardada ✓');
-    learn('idea_added', { content: text, category: parsed.category, potential: parsed.potential });
+    learn('idea_added',{content:text,category:parsed.category,potential:parsed.potential});
     loadIdeas();
   } catch(e) {
     // Guardar sin análisis si falla
@@ -1157,7 +1163,7 @@ function ideaToScript(id) {
   nav('scripts', document.querySelectorAll('.nav-item')[7]);
   document.getElementById('sc-idea').value = idea.content;
   if (idea.angle) document.getElementById('sc-message').value = idea.angle;
-  learn('idea_to_script', { content: idea.content });
+  learn('idea_to_script',{content:idea.content});
 }
 
 async function deleteIdea(id) {
@@ -1290,7 +1296,7 @@ El script debe sonar como una persona hablando, no texto escrito.`;
     const r = await claude(prompt);
     const parts = r.split(/ÁNGULO 1/);
     el.textContent = parts[0].trim(); el.classList.remove('loading');
-    learn('script_generated', { topic: document.getElementById('sc-idea').value, focus: document.getElementById('sc-focus').value, objective: document.getElementById('sc-obj').value });
+    learn('script_generated',{topic:document.getElementById('sc-idea').value,focus:document.getElementById('sc-focus').value,objective:document.getElementById('sc-obj').value});
 
     if (parts.length > 1) {
       const full = 'ÁNGULO 1' + parts[1];
@@ -1487,206 +1493,6 @@ async function deleteHook(id) {
 
 
 
-
-// ─── BACKGROUND LEARNER ──────────────────────────────────
-// Runs silently after every user action. Never visible.
-
-let currentScriptTopic = '';
-let currentScriptContent = '';
-
-// Core learn function — runs in background after every action
-async function learn(trigger, data = {}) {
-  try {
-    const voice = JSON.parse(localStorage.getItem('fer_voice') || '{}');
-    const profile = await getLearnedProfile();
-
-    const context = buildLearningContext(trigger, data, profile, voice);
-    if (!context) return;
-
-    const prompt = `Eres el motor de aprendizaje interno de un creador de contenido mexicano. Tu trabajo es actualizar silenciosamente su perfil de voz basándote en sus acciones.
-
-PERFIL ACTUAL:
-Quién: ${voice.who || ''}
-Tono: ${voice.tone || ''}
-Evita: ${voice.avoid || ''}
-Audiencia: ${voice.audience || ''}
-
-PERFIL APRENDIDO HASTA AHORA:
-${profile.learned || 'Inicio — sin datos aún.'}
-
-NUEVA SEÑAL (${trigger}):
-${context}
-
-Actualiza el perfil aprendido integrando esta nueva señal. Responde en JSON exacto (sin markdown):
-{
-  "avoid": "Lista actualizada de palabras/frases que nunca usa",
-  "tone": "Descripción de tono actualizada",
-  "learned": "Perfil acumulado completo — qué has aprendido sobre este creador (máx 400 palabras, actualiza con la nueva señal)",
-  "version": ${(profile.version || 0) + 1}
-}`;
-
-    const raw = await claude(prompt);
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const updated = JSON.parse(clean);
-
-    // Update voice silently
-    const newVoice = { ...voice };
-    if (updated.avoid) newVoice.avoid = updated.avoid;
-    if (updated.tone) newVoice.tone = updated.tone;
-    localStorage.setItem('fer_voice', JSON.stringify(newVoice));
-
-    // Save to Supabase
-    const existing = await sbGet('voice_evolution', '?order=created_at.desc&limit=1');
-    if (existing && existing.length > 0) {
-      await sbPatch('voice_evolution', {
-        tone: updated.tone,
-        avoid: updated.avoid,
-        learned_patterns: updated.learned,
-        feedback_count: updated.version,
-        updated_at: new Date().toISOString()
-      }, '?id=eq.' + existing[0].id);
-    } else {
-      await sbPost('voice_evolution', {
-        version: 1,
-        who: voice.who,
-        tone: updated.tone || voice.tone,
-        avoid: updated.avoid || voice.avoid,
-        audience: voice.audience,
-        learned_patterns: updated.learned,
-        feedback_count: 1
-      });
-    }
-  } catch(e) {
-    // Silent fail — never interrupt the user
-    console.log('[learn] silent error:', e.message);
-  }
-}
-
-async function getLearnedProfile() {
-  try {
-    const evo = await sbGet('voice_evolution', '?order=created_at.desc&limit=1');
-    if (evo && evo.length > 0) {
-      return {
-        learned: evo[0].learned_patterns || '',
-        version: evo[0].feedback_count || 0,
-        avoid: evo[0].avoid || '',
-        tone: evo[0].tone || ''
-      };
-    }
-  } catch(e) {}
-  return { learned: '', version: 0 };
-}
-
-function buildLearningContext(trigger, data, profile, voice) {
-  switch(trigger) {
-    case 'feedback':
-      return `El creador dio feedback sobre un script:
-Tema del script: ${data.topic || '—'}
-Feedback general: ${data.general || '—'}
-Palabras que NO usa: ${data.avoid || '—'}
-Palabras que SÍ usa: ${data.use || '—'}
-Notas de estructura/tono: ${data.structure || '—'}`;
-
-    case 'video_analyzed':
-      return `Analizó un video de competencia de: ${data.creator || 'desconocido'}
-Hook que usaron: ${(data.hook || '').slice(0, 100)}
-Por qué funcionó: ${(data.why || '').slice(0, 100)}
-Señal: Le interesa este tipo de contenido y estructura.`;
-
-    case 'idea_added':
-      return `Agregó una nueva idea a su banco:
-"${(data.content || '').slice(0, 150)}"
-Categoría detectada: ${data.category || '—'}
-Potencial: ${data.potential || '—'}
-Señal: Este tema le importa y quiere hablar de él.`;
-
-    case 'script_generated':
-      return `Generó un script sobre: "${data.topic || '—'}"
-Enfoque elegido: ${data.focus || '—'}
-Objetivo: ${data.objective || '—'}
-Señal: Estos son temas y enfoques que le interesan explorar.`;
-
-    case 'idea_to_script':
-      return `Convirtió una idea en script: "${(data.content || '').slice(0, 100)}"
-Señal: Esta idea tuvo suficiente potencial para convertirse en video.`;
-
-    default:
-      return null;
-  }
-}
-
-// Inject full learned profile into every Claude call
-function getVoice() {
-  const v = JSON.parse(localStorage.getItem('fer_voice') || '{}');
-  if (!v.who) return '';
-  return `
-VOZ DEL CREADOR:
-Quién soy: ${v.who}
-Tono: ${v.tone}
-Evito: ${v.avoid}
-Audiencia: ${v.audience}`;
-}
-
-// ─── FEEDBACK MODAL (visible UI, learning happens in background) ──
-function openFeedbackModal() {
-  const content = document.getElementById('sc-out').textContent;
-  const topic = document.getElementById('sc-idea').value;
-  if (!content || content === 'El script aparece aquí...') {
-    toast('Genera un script primero'); return;
-  }
-  currentScriptTopic = topic;
-  currentScriptContent = content;
-  document.getElementById('fb-general').value = '';
-  document.getElementById('fb-avoid').value = '';
-  document.getElementById('fb-use').value = '';
-  document.getElementById('fb-structure').value = '';
-  document.getElementById('fb-processing').style.display = 'none';
-  document.getElementById('feedback-overlay').classList.add('open');
-}
-
-function closeFeedbackModal(e) {
-  if (!e || e.target === document.getElementById('feedback-overlay')) {
-    document.getElementById('feedback-overlay').classList.remove('open');
-  }
-}
-
-async function saveFeedback() {
-  const general = document.getElementById('fb-general').value.trim();
-  const avoid = document.getElementById('fb-avoid').value.trim();
-  const use = document.getElementById('fb-use').value.trim();
-  const structure = document.getElementById('fb-structure').value.trim();
-
-  if (!general && !avoid && !use && !structure) {
-    toast('Escribe algo de feedback primero'); return;
-  }
-
-  document.getElementById('fb-processing').style.display = 'block';
-
-  try {
-    // Save raw feedback to DB
-    await sbPost('feedback', {
-      script_topic: currentScriptTopic,
-      script_content: currentScriptContent.slice(0, 500),
-      feedback_text: general,
-      words_avoid: avoid,
-      words_use: use,
-      structure_notes: structure,
-      processed: false
-    });
-
-    document.getElementById('feedback-overlay').classList.remove('open');
-    toast('Feedback guardado ✓');
-
-    // Learn in background — non-blocking
-    learn('feedback', { topic: currentScriptTopic, general, avoid, use, structure });
-
-  } catch(e) {
-    toast('Error: ' + e.message);
-    document.getElementById('fb-processing').style.display = 'none';
-  }
-}
-
-// ─── SUMMARIES & INSIGHTS ─────────────────────────────────
 // ─── SUMMARIES & INSIGHTS ─────────────────────────────────
 
 async function generateVideoSummary(parsed, videoId) {
@@ -1822,68 +1628,6 @@ Temas frecuentes: ${d.topics||''}
   return '';
 }
 
-
-// ─── SCRIPTS GUARDADOS ────────────────────────────────────
-async function loadScriptsGuardados() {
-  try {
-    const scripts = await sbGet('scripts', '?order=created_at.desc') || [];
-    document.getElementById('sg-count').textContent = scripts.length;
-    const el = document.getElementById('sg-list');
-    if (!scripts.length) {
-      el.innerHTML = '<div class="empty"><span class="empty-icon">📁</span>Sin scripts guardados aún.</div>';
-      return;
-    }
-    el.innerHTML = scripts.map(s => `
-      <div class="card" style="margin-bottom:8px;cursor:pointer" onclick="showScript('${s.id}')">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">${s.idea || 'Sin tema'}</div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${new Date(s.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})}</div>
-            <div style="font-size:12px;color:var(--text2);line-height:1.5">${(s.script_content||'').slice(0,120)}${(s.script_content||'').length>120?'...':''}</div>
-          </div>
-          <div style="display:flex;gap:6px;flex-shrink:0">
-            <span class="badge badge-info">${s.focus||'—'}</span>
-          </div>
-        </div>
-      </div>
-    `).join('');
-  } catch(e) { toast('Error cargando scripts'); }
-}
-
-let allScripts = [];
-async function showScript(id) {
-  try {
-    const scripts = await sbGet('scripts', '?order=created_at.desc') || [];
-    const s = scripts.find(x => x.id === id);
-    if (!s) return;
-    const html = `
-      <div class="modal-section">
-        <div class="modal-section-title">Idea / Tema</div>
-        <div class="modal-body">${s.idea||'—'}</div>
-      </div>
-      <div class="modal-section">
-        <div class="modal-section-title">Script</div>
-        <div class="modal-body">${s.script_content||'—'}</div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:1rem">
-        <button class="btn btn-primary btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(s.script_content||'')}).then(()=>toast('Copiado ✓'))">Copiar</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteScript('${s.id}')">Eliminar</button>
-      </div>
-    `;
-    openModal(s.idea || 'Script guardado', html);
-  } catch(e) { toast('Error'); }
-}
-
-async function deleteScript(id) {
-  if (!confirm('¿Eliminar este script?')) return;
-  try {
-    await sbDelete('scripts', '?id=eq.' + id);
-    closeModalBtn();
-    toast('Script eliminado');
-    loadScriptsGuardados();
-  } catch(e) { toast('Error'); }
-}
-
 // ─── MOBILE ───────────────────────────────────────────────
 function isMobile() { return window.innerWidth <= 768; }
 
@@ -1955,6 +1699,174 @@ document.addEventListener('click', function(e) {
 });
 
 // ─── INIT ─────────────────────────────────────────────────
+
+
+// ─── FEEDBACK ─────────────────────────────────────────────
+let _fbTopic = '', _fbContent = '';
+
+function openFeedbackModal() {
+  const content = document.getElementById('sc-out').textContent;
+  if (!content || content === 'El script aparece aquí...') { toast('Genera un script primero'); return; }
+  _fbTopic = document.getElementById('sc-idea').value;
+  _fbContent = content;
+  ['fb-general','fb-avoid','fb-use','fb-structure'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fb-processing').style.display = 'none';
+  document.getElementById('feedback-overlay').classList.add('open');
+}
+
+function closeFeedbackModal() {
+  document.getElementById('feedback-overlay').classList.remove('open');
+}
+
+async function saveFeedback() {
+  const general = document.getElementById('fb-general').value.trim();
+  const avoid   = document.getElementById('fb-avoid').value.trim();
+  const use     = document.getElementById('fb-use').value.trim();
+  const structure = document.getElementById('fb-structure').value.trim();
+  if (!general && !avoid && !use && !structure) { toast('Escribe algo primero'); return; }
+  document.getElementById('fb-processing').style.display = 'block';
+  try {
+    await sbPost('feedback', {
+      script_topic: _fbTopic, script_content: _fbContent.slice(0,500),
+      feedback_text: general, words_avoid: avoid, words_use: use,
+      structure_notes: structure, processed: false
+    });
+    closeFeedbackModal();
+    toast('Feedback guardado ✓');
+    learn('feedback', { topic: _fbTopic, general, avoid, use, structure });
+  } catch(e) { toast('Error: ' + e.message); document.getElementById('fb-processing').style.display = 'none'; }
+}
+
+// ─── BACKGROUND LEARNER ────────────────────────────────────
+async function learn(trigger, data = {}) {
+  try {
+    const voice = JSON.parse(localStorage.getItem('fer_voice') || '{}');
+    if (!voice.who) return;
+    let learnedPatterns = '';
+    try {
+      const evo = await sbGet('voice_evolution', '?order=created_at.desc&limit=1');
+      if (evo && evo.length > 0) learnedPatterns = evo[0].learned_patterns || '';
+    } catch(e) {}
+
+    const signals = {
+      feedback: `Feedback sobre script "${data.topic||''}": ${data.general||''} | Evita: ${data.avoid||''} | Usa: ${data.use||''} | Estructura: ${data.structure||''}`,
+      video_analyzed: `Analizó video de ${data.creator||'?'}: Hook="${(data.hook||'').slice(0,80)}" | Por qué funciona: ${(data.why||'').slice(0,80)}`,
+      idea_added: `Nueva idea [${data.category||''}/${data.potential||''}]: "${(data.content||'').slice(0,120)}"`,
+      script_generated: `Generó script sobre "${data.topic||''}" con enfoque ${data.focus||''} y objetivo ${data.objective||''}`,
+      idea_to_script: `Convirtió en script: "${(data.content||'').slice(0,100)}"`
+    };
+    const signal = signals[trigger];
+    if (!signal) return;
+
+    const prompt = `Eres el motor de aprendizaje de un creador mexicano. Actualiza su perfil.
+
+PERFIL ACTUAL:
+Quién: ${voice.who||''}
+Tono: ${voice.tone||''}
+Evita: ${voice.avoid||''}
+Audiencia: ${voice.audience||''}
+Aprendido: ${learnedPatterns||'Inicio.'}
+
+NUEVA SEÑAL (${trigger}): ${signal}
+
+JSON exacto (sin markdown):
+{"avoid":"lista actualizada de lo que nunca usa","tone":"tono actualizado","learned":"perfil acumulado máx 300 palabras"}`;
+
+    const raw = await claude(prompt);
+    const clean = raw.replace(/\`\`\`json|\`\`\`/g,'').trim();
+    const updated = JSON.parse(clean);
+    const newVoice = {...voice, avoid: updated.avoid||voice.avoid, tone: updated.tone||voice.tone};
+    localStorage.setItem('fer_voice', JSON.stringify(newVoice));
+
+    const existing = await sbGet('voice_evolution','?order=created_at.desc&limit=1');
+    const ver = existing && existing.length ? (existing[0].feedback_count||0)+1 : 1;
+    if (existing && existing.length) {
+      await sbPatch('voice_evolution',{tone:updated.tone,avoid:updated.avoid,learned_patterns:updated.learned,feedback_count:ver,updated_at:new Date().toISOString()},'?id=eq.'+existing[0].id);
+    } else {
+      await sbPost('voice_evolution',{version:1,who:voice.who,tone:updated.tone||voice.tone,avoid:updated.avoid||voice.avoid,audience:voice.audience,learned_patterns:updated.learned,feedback_count:1});
+    }
+  } catch(e) { console.log('[learn]',e.message); }
+}
+
+// ─── SCRIPTS GUARDADOS ─────────────────────────────────────
+async function loadScriptsGuardados() {
+  try {
+    const scripts = await sbGet('scripts','?order=created_at.desc') || [];
+    document.getElementById('sg-count').textContent = scripts.length;
+    const el = document.getElementById('sg-list');
+    if (!scripts.length) { el.innerHTML = '<div class="empty"><span class="empty-icon">📁</span>Sin scripts guardados aún.</div>'; return; }
+    el.innerHTML = scripts.map(s => `
+      <div class="card" style="cursor:pointer" onclick="showSavedScript('${s.id}','${encodeURIComponent(s.idea||'')}','${encodeURIComponent(s.script_content||'')}','${s.focus||''}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px">${s.idea||'Sin tema'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:5px">${new Date(s.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})}</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.5">${(s.script_content||'').slice(0,100)}...</div>
+          </div>
+          <span class="badge badge-info" style="flex-shrink:0">${s.focus||'—'}</span>
+        </div>
+      </div>`).join('');
+  } catch(e) { toast('Error cargando scripts'); }
+}
+
+function showSavedScript(id, ideaEnc, contentEnc, focus) {
+  const idea = decodeURIComponent(ideaEnc);
+  const content = decodeURIComponent(contentEnc);
+  const html = `
+    <div class="modal-section"><div class="modal-section-title">Tema</div><div class="modal-body">${idea}</div></div>
+    <div class="modal-section"><div class="modal-section-title">Script</div><div class="modal-body" style="white-space:pre-wrap;max-height:400px;overflow-y:auto">${content}</div></div>
+    <div style="display:flex;gap:8px;margin-top:1rem">
+      <button class="btn btn-primary btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(content)}).then(()=>toast('Copiado ✓'))">Copiar</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSavedScript('${id}')">Eliminar</button>
+    </div>`;
+  openModal(idea||'Script guardado', html);
+}
+
+async function deleteSavedScript(id) {
+  if (!confirm('¿Eliminar?')) return;
+  try { await sbDelete('scripts','?id=eq.'+id); closeModalBtn(); toast('Eliminado'); loadScriptsGuardados(); }
+  catch(e) { toast('Error'); }
+}
+
+// ─── MOBILE ────────────────────────────────────────────────
+function closeMobileMenus() {
+  document.getElementById('more-menu').classList.remove('open');
+  document.getElementById('quick-sheet').classList.remove('open');
+}
+function toggleMoreMenu() { document.getElementById('more-menu').classList.toggle('open'); }
+function toggleQuickSheet() {
+  const s = document.getElementById('quick-sheet');
+  s.classList.toggle('open');
+  if (s.classList.contains('open')) setTimeout(()=>document.getElementById('quick-idea-inp').focus(),100);
+}
+function closeQuickSheet() { document.getElementById('quick-sheet').classList.remove('open'); document.getElementById('quick-idea-inp').value=''; }
+
+async function quickSaveIdea() {
+  const inp = document.getElementById('quick-idea-inp');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = ''; closeQuickSheet(); toast('Guardando...');
+  const prompt = `Clasifica esta idea de contenido mexicano masculino: "${text}"
+JSON exacto: {"category":"crecimiento|opiniones|retos|confrontacion|motivacion|relaciones|disciplina","potential":"alto|medio|bajo","angle":"ángulo más potente en 1-2 oraciones"}`;
+  try {
+    const raw = await claude(prompt);
+    const p = JSON.parse(raw.replace(/\`\`\`json|\`\`\`/g,'').trim());
+    await sbPost('ideas',{content:text,category:p.category||'crecimiento',potential:p.potential||'medio',angle:p.angle||'',status:'nueva'});
+    learn('idea_added',{content:text,category:p.category,potential:p.potential});
+    toast('Idea guardada ✓');
+    if (document.getElementById('panel-ideas').classList.contains('active')) loadIdeas();
+  } catch(e) {
+    try { await sbPost('ideas',{content:text,category:'crecimiento',potential:'medio',angle:'',status:'nueva'}); toast('Idea guardada ✓'); }
+    catch(e2) { toast('Error'); }
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.more-menu') && !e.target.closest('#bn-more'))
+    document.getElementById('more-menu').classList.remove('open');
+  if (!e.target.closest('.quick-sheet') && !e.target.closest('.fab'))
+    document.getElementById('quick-sheet').classList.remove('open');
+});
 
 </script>
 </body>
