@@ -175,6 +175,8 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
     <div class="nav-section">Crear</div>
     <button class="nav-item" onclick="nav('analizar',this)">🔍 Analizar video</button>
     <button class="nav-item" onclick="nav('scripts',this)">✍️ Scripts</button>
+    <button class="nav-item" onclick="nav('hooks',this)">🎣 Hook Generator</button>
+    <button class="nav-item" onclick="nav('biblioteca',this)">📚 Biblioteca de hooks</button>
     <div class="nav-section">Config</div>
     <button class="nav-item" onclick="nav('voz',this)">🎙️ Mi voz</button>
     <button class="nav-item" onclick="nav('config',this)">🔑 API Keys</button>
@@ -374,6 +376,75 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
         </div>
       </div>
 
+
+      <!-- HOOK GENERATOR -->
+      <div class="panel" id="panel-hooks">
+        <div class="grid-2">
+          <div>
+            <div class="card">
+              <div class="card-title">🎣 Generador de hooks</div>
+              <span class="label">Tema del video</span>
+              <input id="hook-topic" placeholder="Ej: Por qué los hombres no pedimos ayuda">
+              <span class="label">Mecanismos (elige los que quieras)</span>
+              <div style="margin-bottom:.75rem" id="hook-mechanisms">
+                <span class="tag active" data-mech="curiosidad">Curiosidad</span>
+                <span class="tag active" data-mech="identificacion">Identificación</span>
+                <span class="tag active" data-mech="contrariedad">Contrariedad</span>
+                <span class="tag active" data-mech="provocacion">Provocación</span>
+                <span class="tag active" data-mech="confesion">Confesión</span>
+                <span class="tag active" data-mech="dato">Dato sorpresivo</span>
+                <span class="tag active" data-mech="pregunta">Pregunta directa</span>
+                <span class="tag active" data-mech="historia">Inicio de historia</span>
+              </div>
+              <span class="label">Tono</span>
+              <select id="hook-tone">
+                <option value="coloquial">Coloquial mexicano</option>
+                <option value="directo">Directo y confrontacional</option>
+                <option value="reflexivo">Reflexivo y pausado</option>
+                <option value="provocador">Provocador</option>
+              </select>
+              <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="genHooks()">✨ Generar 10 hooks</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">💡 Tips de hooks que funcionan</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.8">
+              <div style="margin-bottom:.5rem">🎯 <strong>Los primeros 3 segundos son todo.</strong> Si no enganchan, el resto no importa.</div>
+              <div style="margin-bottom:.5rem">🔥 <strong>Curiosidad:</strong> "Lo que nadie te dice sobre..."</div>
+              <div style="margin-bottom:.5rem">😮 <strong>Contrariedad:</strong> "Dejar de [cosa obvia] fue lo mejor..."</div>
+              <div style="margin-bottom:.5rem">🪞 <strong>Identificación:</strong> "Si eres de los que..."</div>
+              <div style="margin-bottom:.5rem">💬 <strong>Confesión:</strong> "Voy a ser honesto sobre algo que..."</div>
+              <div>📊 <strong>Dato:</strong> "El X% de los hombres de 20s..."</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" id="hooks-result-card" style="display:none">
+          <div class="card-title">🎣 Hooks generados <span style="font-size:11px;color:var(--text3);font-weight:400;margin-left:6px">Haz clic en uno para guardarlo en tu biblioteca</span></div>
+          <div id="hooks-list"></div>
+        </div>
+      </div>
+
+      <!-- BIBLIOTECA DE HOOKS -->
+      <div class="panel" id="panel-biblioteca">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div style="font-size:13px;color:var(--text2)">Hooks guardados: <strong id="hooks-count">0</strong></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem" id="hook-filters">
+          <span class="tag active" onclick="filterHooks('todos',this)">Todos</span>
+          <span class="tag" onclick="filterHooks('curiosidad',this)">Curiosidad</span>
+          <span class="tag" onclick="filterHooks('identificacion',this)">Identificación</span>
+          <span class="tag" onclick="filterHooks('contrariedad',this)">Contrariedad</span>
+          <span class="tag" onclick="filterHooks('provocacion',this)">Provocación</span>
+          <span class="tag" onclick="filterHooks('confesion',this)">Confesión</span>
+          <span class="tag" onclick="filterHooks('dato',this)">Dato sorpresivo</span>
+          <span class="tag" onclick="filterHooks('pregunta',this)">Pregunta directa</span>
+          <span class="tag" onclick="filterHooks('historia',this)">Inicio de historia</span>
+          <span class="tag" onclick="filterHooks('competencia',this)">De competencia</span>
+        </div>
+        <div id="biblioteca-list">
+          <div class="empty"><span class="empty-icon">📚</span>Sin hooks aún. Genera algunos o analiza videos de competencia.</div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -392,12 +463,16 @@ const PANELS = {
   scripts:     ['Generador de scripts','Con tu voz, tu objetivo y tu enfoque'],
   voz:         ['Mi voz','Configuración permanente · se usa en todos los scripts'],
   config:      ['API Keys','Configuración de Anthropic'],
+  hooks:       ['Hook Generator','Genera 10 hooks distintos para cualquier tema'],
+  biblioteca:  ['Biblioteca de hooks','Tu arsenal de hooks guardados'],
 };
 
 let currentWeek = 1;
 let currentIdeaFilter = 'todas';
 let allIdeas = [];
 let allVideos = [];
+let allHooks = [];
+let currentHookFilter = "todos";
 
 // ─── SUPABASE ─────────────────────────────────────────────
 async function sb(method, table, body, query='') {
@@ -469,6 +544,8 @@ function nav(id, btn) {
   if (id === 'calendario') { loadCalSlots(); loadCalStats(); }
   if (id === 'voz') loadVoice();
   if (id === 'config') loadKeys();
+  if (id === 'biblioteca') loadBiblioteca();
+  if (id === 'hooks') initHookMechanisms();
 }
 
 // ─── TOAST ────────────────────────────────────────────────
@@ -972,6 +1049,133 @@ function saveKeys() {
 function loadKeys() {
   const k = localStorage.getItem('fer_claude_key') || '';
   if (k) { document.getElementById('claude-key').value = k; document.getElementById('keys-ok').textContent = '✓ Guardado'; }
+}
+
+
+// ─── HOOK GENERATOR ───────────────────────────────────────
+function initHookMechanisms() {
+  document.querySelectorAll('#hook-mechanisms .tag').forEach(t => {
+    t.onclick = () => t.classList.toggle('active');
+  });
+}
+
+async function genHooks() {
+  const topic = document.getElementById('hook-topic').value.trim();
+  if (!topic) { alert('Escribe el tema primero'); return; }
+  const mechs = [...document.querySelectorAll('#hook-mechanisms .tag.active')].map(t => t.dataset.mech);
+  if (!mechs.length) { alert('Selecciona al menos un mecanismo'); return; }
+  const tone = document.getElementById('hook-tone').value;
+  const voice = getVoice();
+
+  const card = document.getElementById('hooks-result-card');
+  const list = document.getElementById('hooks-list');
+  card.style.display = 'block';
+  list.innerHTML = '<div class="ai-out loading">Generando hooks...</div>';
+
+  const prompt = `Genera exactamente 10 hooks para TikTok/Reels sobre el tema: "${topic}"
+${voice}
+Tono: ${tone}
+Mecanismos a usar (distribuye entre ellos): ${mechs.join(', ')}
+
+Reglas:
+- Máximo 2-3 oraciones por hook
+- En español mexicano coloquial
+- Cada hook debe sonar diferente al anterior
+- Son los primeros 3 segundos del video, deben enganchar inmediatamente
+
+Responde en JSON exacto (array de 10, sin markdown):
+[{"hook":"...","mechanism":"uno de: ${mechs.join('|')}"}]`;
+
+  try {
+    const raw = await claude(prompt);
+    const clean = raw.replace(/\`\`\`json|\`\`\`/g, '').trim();
+    const hooks = JSON.parse(clean);
+    list.innerHTML = hooks.map((h, i) => `
+      <div style="border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .12s" 
+           onmouseover="this.style.borderColor='var(--border2)'" 
+           onmouseout="this.style.borderColor='var(--border)'"
+           onclick="saveHookToLib('${encodeURIComponent(h.hook)}','${h.mechanism}','${encodeURIComponent(topic)}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:4px">${i+1}. ${h.mechanism}</div>
+            <div style="font-size:14px;color:var(--text);line-height:1.6">${h.hook}</div>
+          </div>
+          <button class="btn btn-sm" style="flex-shrink:0;font-size:11px" onclick="event.stopPropagation();saveHookToLib('${encodeURIComponent(h.hook)}','${h.mechanism}','${encodeURIComponent(topic)}')">Guardar</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="ai-out">Error: ' + e.message + '</div>';
+  }
+}
+
+async function saveHookToLib(hookEnc, mechanism, topicEnc) {
+  const hook = decodeURIComponent(hookEnc);
+  const topic = decodeURIComponent(topicEnc);
+  try {
+    await sbPost('hooks', { hook_text: hook, mechanism, topic, source: 'generado' });
+    toast('Hook guardado en biblioteca ✓');
+  } catch(e) { toast('Error al guardar: ' + e.message); }
+}
+
+// ─── BIBLIOTECA ────────────────────────────────────────────
+async function loadBiblioteca() {
+  try {
+    allHooks = await sbGet('hooks', '?order=created_at.desc') || [];
+    renderBiblioteca();
+    document.getElementById('hooks-count').textContent = allHooks.length;
+  } catch(e) { toast('Error cargando hooks'); }
+}
+
+function filterHooks(filter, el) {
+  currentHookFilter = filter;
+  document.querySelectorAll('#hook-filters .tag').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderBiblioteca();
+}
+
+function renderBiblioteca() {
+  const el = document.getElementById('biblioteca-list');
+  const filtered = currentHookFilter === 'todos' ? allHooks : allHooks.filter(h => h.mechanism === currentHookFilter);
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty"><span class="empty-icon">📚</span>Sin hooks en esta categoría.</div>';
+    return;
+  }
+  const mechColors = {
+    curiosidad:'badge-info', identificacion:'badge-ok', contrariedad:'badge-warn',
+    provocacion:'badge-warn', confesion:'badge-purple', dato:'badge-info',
+    pregunta:'badge-ok', historia:'badge-purple', competencia:'badge-info'
+  };
+  el.innerHTML = filtered.map(h => `
+    <div class="idea-card">
+      <div class="idea-content">
+        <div class="idea-text">${h.hook_text}</div>
+        <div class="idea-meta">
+          <span class="badge ${mechColors[h.mechanism]||'badge-info'}">${h.mechanism}</span>
+          ${h.topic ? '<span style="color:var(--text3)">Tema: ' + h.topic + '</span>' : ''}
+          <span class="badge ${h.source==='competencia'?'badge-warn':'badge-ok'}">${h.source||'generado'}</span>
+        </div>
+      </div>
+      <div class="idea-btns">
+        <button class="icon-btn" title="Usar en script" onclick="hookToScript('${encodeURIComponent(h.hook_text)}')">✍️</button>
+        <button class="icon-btn" title="Eliminar" onclick="deleteHook('${h.id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function hookToScript(hookEnc) {
+  const hook = decodeURIComponent(hookEnc);
+  nav('scripts', document.querySelectorAll('.nav-item')[8]);
+  document.getElementById('sc-idea').value = hook;
+}
+
+async function deleteHook(id) {
+  try {
+    await sbDelete('hooks', '?id=eq.' + id);
+    toast('Hook eliminado');
+    loadBiblioteca();
+  } catch(e) { toast('Error'); }
 }
 
 // ─── INIT ─────────────────────────────────────────────────
