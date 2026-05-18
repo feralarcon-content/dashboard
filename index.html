@@ -319,6 +319,34 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- UPLOAD SCRIPT MODAL -->
+<div class="modal-overlay" id="upload-overlay" onclick="if(event.target===this)closeUploadModal()">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">
+      📤 Subir script
+      <button class="btn btn-sm" onclick="closeUploadModal()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">Pega un script tuyo — pasado o nuevo. Se guarda como memoria de cómo escribes.</p>
+    <span class="label">Tema o título</span>
+    <input id="up-topic" placeholder="Ej: Por qué los hombres no pedimos ayuda">
+    <span class="label">Script completo</span>
+    <textarea id="up-content" placeholder="Pega aquí el script..." style="min-height:180px"></textarea>
+    <span class="label">Enfoque (opcional)</span>
+    <select id="up-focus">
+      <option value="historia">Historia personal</option>
+      <option value="opinion">Opinión directa</option>
+      <option value="confrontacion">Confrontación</option>
+      <option value="educativo">Educativo / Tip</option>
+      <option value="pregunta">Pregunta provocadora</option>
+    </select>
+    <div style="display:flex;gap:8px;margin-top:.5rem">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="uploadScript()">💾 Guardar y aprender</button>
+      <button class="btn" onclick="closeUploadModal()">Cancelar</button>
+    </div>
+    <div id="up-processing" style="display:none;margin-top:.75rem;font-size:12px;color:var(--text3);font-style:italic">Guardando y aprendiendo de tu estilo...</div>
+  </div>
+</div>
+
 <!-- FEEDBACK MODAL -->
 <div class="modal-overlay" id="feedback-overlay" onclick="if(event.target===this)closeFeedbackModal()">
   <div class="modal" style="max-width:540px">
@@ -577,7 +605,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
             <button class="btn btn-sm" onclick="saveScript()">Guardar</button>
             <button class="btn btn-sm" style="background:var(--info-bg);color:var(--info-text);border-color:transparent" onclick="openFeedbackModal()">💬 Feedback</button>
           </div>
-          <div class="ai-out loading" id="sc-out">El script aparece aquí...</div>
+          <div class="ai-out loading" id="sc-out" contenteditable="false" style="outline:none;cursor:default">El script aparece aquí...</div>
         </div>
       </div>
 
@@ -742,7 +770,10 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
       <div class="panel" id="panel-scripts_guardados">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
           <div style="font-size:13px;color:var(--text2)">Scripts guardados: <strong id="sg-count">0</strong></div>
-          <button class="btn btn-primary btn-sm" onclick="nav('scripts',document.querySelector('.nav-item.active'))">+ Nuevo</button>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm" onclick="openUploadModal()">📤 Subir script</button>
+            <button class="btn btn-primary btn-sm" onclick="nav('scripts',document.querySelector('.nav-item.active'))">+ Nuevo</button>
+          </div>
         </div>
         <div id="sg-list"><div class="empty"><span class="empty-icon">📁</span>Sin scripts guardados aún.</div></div>
       </div>
@@ -1296,6 +1327,8 @@ El script debe sonar como una persona hablando, no texto escrito.`;
     const r = await claude(prompt);
     const parts = r.split(/ÁNGULO 1/);
     el.textContent = parts[0].trim(); el.classList.remove('loading');
+    el.contentEditable = 'true'; el.style.cursor = 'text'; el.style.borderColor = 'var(--info-text)'; el.title = 'Edita el script directamente';
+    el.dataset.original = parts[0].trim();
     learn('script_generated',{topic:document.getElementById('sc-idea').value,focus:document.getElementById('sc-focus').value,objective:document.getElementById('sc-obj').value});
 
     if (parts.length > 1) {
@@ -1316,11 +1349,23 @@ async function saveScript() {
   const message = document.getElementById('sc-message').value.trim();
   const focus = document.getElementById('sc-focus').value;
   const obj = document.getElementById('sc-obj').value;
-  const content = document.getElementById('sc-out').textContent;
+  const el = document.getElementById('sc-out');
+  const content = el.innerText || el.textContent;
   if (!content || content === 'El script aparece aquí...') return;
   try {
     await sbPost('scripts', { idea, message, focus, objective: obj, script_content: content });
     toast('Script guardado ✓');
+    // Detect edits and learn from them
+    const original = el.dataset.original || '';
+    if (original && original !== content) {
+      learnFromEdits(idea, original, content);
+    }
+    // Lock editing after save
+    el.contentEditable = 'false';
+    el.style.cursor = 'default';
+    el.style.borderColor = '';
+    el.title = '';
+    if (typeof loadScriptsGuardados === 'function') loadScriptsGuardados();
   } catch(e) { toast('Error al guardar'); }
 }
 
@@ -1753,7 +1798,9 @@ async function learn(trigger, data = {}) {
       video_analyzed: `Analizó video de ${data.creator||'?'}: Hook="${(data.hook||'').slice(0,80)}" | Por qué funciona: ${(data.why||'').slice(0,80)}`,
       idea_added: `Nueva idea [${data.category||''}/${data.potential||''}]: "${(data.content||'').slice(0,120)}"`,
       script_generated: `Generó script sobre "${data.topic||''}" con enfoque ${data.focus||''} y objetivo ${data.objective||''}`,
-      idea_to_script: `Convirtió en script: "${(data.content||'').slice(0,100)}"`
+      idea_to_script: `Convirtió en script: "${(data.content||'').slice(0,100)}"`,
+      script_uploaded: `Subió script manual sobre "${data.topic||'sin título'}" — memoria de estilo: ${(data.content||'').slice(0,150)}`,
+      script_edited: `Editó script sobre "${data.topic||''}": eliminó [${data.removed||''}], agregó [${data.added||''}], tono: ${data.tone||''}, patrón: ${data.pattern||''}`
     };
     const signal = signals[trigger];
     if (!signal) return;
@@ -1867,6 +1914,95 @@ document.addEventListener('click', function(e) {
   if (!e.target.closest('.quick-sheet') && !e.target.closest('.fab'))
     document.getElementById('quick-sheet').classList.remove('open');
 });
+
+
+// ─── UPLOAD SCRIPT ─────────────────────────────────────────
+function openUploadModal() {
+  document.getElementById('up-topic').value = '';
+  document.getElementById('up-content').value = '';
+  document.getElementById('up-focus').value = 'historia';
+  document.getElementById('up-processing').style.display = 'none';
+  document.getElementById('upload-overlay').classList.add('open');
+}
+function closeUploadModal() {
+  document.getElementById('upload-overlay').classList.remove('open');
+}
+
+async function uploadScript() {
+  const topic = document.getElementById('up-topic').value.trim();
+  const content = document.getElementById('up-content').value.trim();
+  const focus = document.getElementById('up-focus').value;
+  if (!content) { toast('Pega el script primero'); return; }
+  document.getElementById('up-processing').style.display = 'block';
+  try {
+    await sbPost('scripts', {
+      idea: topic || 'Script subido manualmente',
+      message: '',
+      focus,
+      objective: 'memoria',
+      script_content: content
+    });
+    closeUploadModal();
+    toast('Script guardado ✓');
+    // Learn from this script as voice memory
+    learn('script_uploaded', { topic, content });
+    loadScriptsGuardados();
+  } catch(e) {
+    toast('Error: ' + e.message);
+    document.getElementById('up-processing').style.display = 'none';
+  }
+}
+
+// ─── LEARN FROM EDITS ──────────────────────────────────────
+async function learnFromEdits(topic, original, edited) {
+  try {
+    const voice = JSON.parse(localStorage.getItem('fer_voice') || '{}');
+    if (!voice.who) return;
+
+    const prompt = `Compara estos dos scripts del mismo creador y extrae qué cambió y qué dice sobre su voz.
+
+SCRIPT ORIGINAL (generado por IA):
+${original.slice(0, 800)}
+
+SCRIPT EDITADO (versión final del creador):
+${edited.slice(0, 800)}
+
+Analiza las diferencias y responde en JSON exacto (sin markdown):
+{
+  "words_removed": "palabras o frases que eliminó",
+  "words_added": "palabras o frases que agregó",
+  "tone_shift": "cómo cambió el tono",
+  "pattern": "qué dice esto sobre cómo escribe este creador",
+  "summary": "resumen del aprendizaje en 1-2 oraciones"
+}`;
+
+    const raw = await claude(prompt);
+    const clean = raw.replace(/\`\`\`json|\`\`\`/g,'').trim();
+    const diff = JSON.parse(clean);
+
+    // Save as feedback
+    await sbPost('feedback', {
+      script_topic: topic,
+      script_content: original.slice(0, 500),
+      feedback_text: diff.summary,
+      words_avoid: diff.words_removed,
+      words_use: diff.words_added,
+      structure_notes: diff.tone_shift + ' | ' + diff.pattern,
+      processed: false
+    });
+
+    // Fire learn signal
+    learn('script_edited', {
+      topic,
+      removed: diff.words_removed,
+      added: diff.words_added,
+      tone: diff.tone_shift,
+      pattern: diff.pattern
+    });
+
+    toast('Ediciones aprendidas ✓');
+  } catch(e) { console.log('[learnFromEdits]', e.message); }
+}
 
 </script>
 </body>
