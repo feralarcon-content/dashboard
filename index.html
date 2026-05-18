@@ -1615,26 +1615,46 @@ ${videosCtx}
 IDEAS EN BANCO (${ideas.length}):
 ${ideasCtx}
 
-Detecta patrones reales. Responde en JSON exacto (sin markdown):
-{
-  "hooks": "¿Qué tipos de hooks aparecen más? ¿Qué mecanismos psicológicos usan los mejores? 3-5 patrones concretos.",
-  "topics": "¿Qué temas dominan el banco? ¿Cuáles tienen más potencial sin explotar? Lista con frecuencia estimada.",
-  "structures": "¿Qué estructuras narrativas se repiten? ¿Cuál es la más efectiva basada en los datos?",
-  "gaps": "¿Qué ángulos NO está tocando nadie en este banco pero tienen alto potencial para este nicho?",
-  "recommendations": "Top 3 acciones concretas que este creador debería tomar basándose en todos estos datos."
-}`;
+Detecta patrones reales. Responde con exactamente este formato (sin JSON, sin markdown, solo el texto):
+
+HOOKS:
+[análisis de hooks, 3-5 patrones concretos]
+
+TEMAS:
+[temas que dominan, cuáles tienen potencial sin explotar]
+
+ESTRUCTURAS:
+[estructuras narrativas que se repiten, cuál es más efectiva]
+
+ANGULOS:
+[ángulos que nadie está tocando pero tienen alto potencial]
+
+RECOMENDACIONES:
+[top 3 acciones concretas para este creador]`;
 
     const raw = await claude(prompt);
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const data = JSON.parse(clean);
+
+    // Parse plain text sections — no JSON so no parse errors
+    function extractSection(text, key) {
+      const regex = new RegExp(key + ':\\s*([\\s\\S]*?)(?=\\n[A-Z]+:|$)', 'i');
+      const match = text.match(regex);
+      return match ? match[1].trim() : '';
+    }
+
+    const data = {
+      hooks: extractSection(raw, 'HOOKS'),
+      topics: extractSection(raw, 'TEMAS'),
+      structures: extractSection(raw, 'ESTRUCTURAS'),
+      gaps: extractSection(raw, 'ANGULOS'),
+      recommendations: extractSection(raw, 'RECOMENDACIONES')
+    };
 
     // Save or update insights
     const existing = await sbGet('insights', '?type=eq.master&limit=1');
     if (existing && existing.length > 0) {
       await sbPatch('insights', {
         content: 'Master insights',
-        data,
-        updated_at: new Date().toISOString()
+        data
       }, '?type=eq.master');
     } else {
       await sbPost('insights', {
@@ -1828,7 +1848,7 @@ JSON exacto (sin markdown):
     const existing = await sbGet('voice_evolution','?order=created_at.desc&limit=1');
     const ver = existing && existing.length ? (existing[0].feedback_count||0)+1 : 1;
     if (existing && existing.length) {
-      await sbPatch('voice_evolution',{tone:updated.tone,avoid:updated.avoid,learned_patterns:updated.learned,feedback_count:ver,updated_at:new Date().toISOString()},'?id=eq.'+existing[0].id);
+      await sbPatch('voice_evolution',{tone:updated.tone,avoid:updated.avoid,learned_patterns:updated.learned,feedback_count:ver},'?id=eq.'+existing[0].id);
     } else {
       await sbPost('voice_evolution',{version:1,who:voice.who,tone:updated.tone||voice.tone,avoid:updated.avoid||voice.avoid,audience:voice.audience,learned_patterns:updated.learned,feedback_count:1});
     }
