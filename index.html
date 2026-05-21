@@ -695,7 +695,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
       </div>
 
       <!-- BIBLIOTECA DE HOOKS -->
-      <div class="panel" id="panel-biblioteca">
+      <div class="panel" id="panel-hooks-bib">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
           <div style="font-size:13px;color:var(--text2)">Hooks guardados: <strong id="hooks-count">0</strong></div>
         </div>
@@ -842,7 +842,6 @@ const PANELS = {
   hooks:       ['Hook Generator','Genera 10 hooks distintos para cualquier tema'],
   biblioteca:  ['Biblioteca','Conocimiento que nutre tu contenido y scripts'],
   insights:    ['Insights','Patrones detectados en tu banco de videos e ideas'],
-  biblioteca:  ['Biblioteca de hooks','Tu arsenal de hooks guardados'],
 };
 
 let currentWeek = 1;
@@ -922,7 +921,7 @@ function nav(id, btn) {
   if (id === 'calendario') { loadCalSlots(); loadCalStats(); }
   if (id === 'voz') loadVoice();
   if (id === 'config') loadKeys();
-  if (id === 'hooks') initHookMechanisms();
+  if (id === 'hooks') { initHookMechanisms(); loadHooksBib(); }
   if (id === 'biblioteca') loadBiblioteca();
   if (id === 'scripts_guardados') loadScriptsGuardados();
   if (id === 'insights') loadInsights();
@@ -1525,7 +1524,7 @@ async function saveHookToLib(hookEnc, mechanism, topicEnc) {
 }
 
 // ─── BIBLIOTECA ────────────────────────────────────────────
-async function loadBiblioteca() {
+async function loadHooksBib() {
   try {
     allHooks = await sbGet('hooks', '?order=created_at.desc') || [];
     renderBiblioteca();
@@ -1537,10 +1536,10 @@ function filterHooks(filter, el) {
   currentHookFilter = filter;
   document.querySelectorAll('#hook-filters .tag').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  renderBiblioteca();
+  renderHooksBib();
 }
 
-function renderBiblioteca() {
+function renderHooksBib() {
   const el = document.getElementById('biblioteca-list');
   const filtered = currentHookFilter === 'todos' ? allHooks : allHooks.filter(h => h.mechanism === currentHookFilter);
   if (!filtered.length) {
