@@ -409,6 +409,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
     <button class="more-menu-item" onclick="nav('videos',document.getElementById('bn-more'));closeMobileMenus()">🎬 Videos</button>
     <button class="more-menu-item" onclick="nav('analizar',document.getElementById('bn-more'));closeMobileMenus()">🔍 Analizar</button>
     <button class="more-menu-item" onclick="nav('biblioteca',document.getElementById('bn-more'));closeMobileMenus()">📚 Biblioteca</button>
+    <button class="more-menu-item" onclick="nav('biblioteca',document.getElementById('bn-more'));closeMobileMenus()">📚 Biblioteca</button>
     <button class="more-menu-item" onclick="nav('voz',document.getElementById('bn-more'));closeMobileMenus()">🎙️ Mi voz</button>
     <button class="more-menu-item" onclick="nav('config',document.getElementById('bn-more'));closeMobileMenus()">🔑 API Keys</button>
   </div>
@@ -444,6 +445,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
     <button class="nav-item" onclick="nav('analizar',this)">🔍 Analizar video</button>
     <button class="nav-item" onclick="nav('videos',this)">🎬 Videos analizados</button>
     <button class="nav-item" onclick="nav('ideas',this)">💡 Banco de ideas</button>
+    <button class="nav-item" onclick="nav('biblioteca',this)">📚 Biblioteca</button>
     <div class="nav-section">Config</div>
     <button class="nav-item" onclick="nav('voz',this)">🎙️ Mi voz</button>
     <button class="nav-item" onclick="nav('config',this)">🔑 API Keys</button>
@@ -777,6 +779,48 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
         </div>
         <div id="sg-list"><div class="empty"><span class="empty-icon">📁</span>Sin scripts guardados aún.</div></div>
       </div>
+
+      <!-- BIBLIOTECA -->
+      <div class="panel" id="panel-biblioteca">
+
+        <!-- INPUT CARD -->
+        <div class="card">
+          <div class="card-title">📥 Agregar conocimiento</div>
+          <span class="label">Fuente / título</span>
+          <input id="bib-source" placeholder="Ej: Curso de Alex Hormozi — $100M Offers, Video de MrBeast sobre thumbnails...">
+          <span class="label">Tipo</span>
+          <select id="bib-type">
+            <option value="curso">Curso</option>
+            <option value="libro">Libro / Resumen</option>
+            <option value="video">Video / Transcript</option>
+            <option value="articulo">Artículo / Newsletter</option>
+            <option value="framework">Framework / Metodología</option>
+            <option value="otro">Otro</option>
+          </select>
+          <span class="label">Contenido sintetizado</span>
+          <textarea id="bib-content" placeholder="Pega aquí tus notas, el resumen, los puntos clave, la transcripción... Lo más denso mejor." style="min-height:160px"></textarea>
+          <button class="btn btn-primary" onclick="saveBiblioteca()">🔬 Analizar y guardar</button>
+        </div>
+
+        <!-- ENTRIES LIST -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+          <div style="font-size:13px;color:var(--text2)">Entradas guardadas: <strong id="bib-count">0</strong></div>
+        </div>
+        <div id="bib-list">
+          <div class="empty"><span class="empty-icon">📚</span>Sin entradas aún. Agrega tu primer recurso arriba.</div>
+        </div>
+      </div>
+
+      <!-- BIBLIOTECA DETAIL MODAL -->
+      <div class="modal-overlay" id="bib-modal-overlay" onclick="if(event.target===this)closeBibModal()">
+        <div class="modal" style="max-width:700px">
+          <div class="modal-title">
+            <span id="bib-modal-title">Detalle</span>
+            <button class="btn btn-sm" onclick="closeBibModal()">✕</button>
+          </div>
+          <div id="bib-modal-content"></div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -796,6 +840,7 @@ const PANELS = {
   voz:         ['Mi voz','Configuración permanente · se usa en todos los scripts'],
   config:      ['API Keys','Configuración de Anthropic'],
   hooks:       ['Hook Generator','Genera 10 hooks distintos para cualquier tema'],
+  biblioteca:  ['Biblioteca','Conocimiento que nutre tu contenido y scripts'],
   insights:    ['Insights','Patrones detectados en tu banco de videos e ideas'],
   biblioteca:  ['Biblioteca de hooks','Tu arsenal de hooks guardados'],
 };
@@ -878,6 +923,7 @@ function nav(id, btn) {
   if (id === 'voz') loadVoice();
   if (id === 'config') loadKeys();
   if (id === 'hooks') initHookMechanisms();
+  if (id === 'biblioteca') loadBiblioteca();
   if (id === 'scripts_guardados') loadScriptsGuardados();
   if (id === 'insights') loadInsights();
 }
@@ -1221,6 +1267,7 @@ async function getSuggestions(mode='balanced') {
     const ideasCtx = ideas.map(i => `- [${i.category}/${i.potential}] ${i.content.slice(0,80)}`).join('\n');
     const voice = getVoice();
     const insightsCtx = await getInsightsContext();
+    const bibCtx = await getBibliotecaContext();
 
     const modeCtx = mode === 'trending' ? 'Enfócate en ángulos con alto potencial viral, temas que generan debate o shares.'
       : mode === 'deep' ? 'Enfócate en contenido más profundo, reflexivo, que genere conexión real con la audiencia.'
@@ -1234,7 +1281,7 @@ ${videosCtx || 'Sin videos aún.'}
 
 IDEAS EN EL BANCO:
 ${ideasCtx || 'Sin ideas aún.'}
-${insightsCtx}
+${insightsCtx}${bibCtx}
 
 ${modeCtx}
 
@@ -1295,7 +1342,8 @@ async function genScript() {
   document.getElementById('angles-out').innerHTML = '<div style="font-size:13px;color:var(--text3);font-style:italic">Generando ángulos...</div>';
 
   const voice = getVoice();
-  const prompt = `Eres asistente de contenido.${voice}
+  const bibCtx = await getBibliotecaContext();
+  const prompt = `Eres asistente de contenido.${voice}${bibCtx}
 
 Genera un script de TikTok/Reels en español mexicano coloquial.
 
@@ -1820,6 +1868,7 @@ async function learn(trigger, data = {}) {
       script_generated: `Generó script sobre "${data.topic||''}" con enfoque ${data.focus||''} y objetivo ${data.objective||''}`,
       idea_to_script: `Convirtió en script: "${(data.content||'').slice(0,100)}"`,
       script_uploaded: `Subió script manual sobre "${data.topic||'sin título'}" — memoria de estilo: ${(data.content||'').slice(0,150)}`,
+      biblioteca_added: `Agregó a biblioteca [${data.type||''}] "${data.source||''}": Frameworks: ${(data.frameworks||'').slice(0,100)} | Aplicación scripts: ${(data.aplicacion||'').slice(0,100)}`,
       script_edited: `Editó script sobre "${data.topic||''}": eliminó [${data.removed||''}], agregó [${data.added||''}], tono: ${data.tone||''}, patrón: ${data.pattern||''}`
     };
     const signal = signals[trigger];
@@ -2022,6 +2071,183 @@ Analiza las diferencias y responde en JSON exacto (sin markdown):
 
     toast('Ediciones aprendidas ✓');
   } catch(e) { console.log('[learnFromEdits]', e.message); }
+}
+
+
+// ─── BIBLIOTECA ────────────────────────────────────────────
+async function saveBiblioteca() {
+  const source = document.getElementById('bib-source').value.trim();
+  const type   = document.getElementById('bib-type').value;
+  const content = document.getElementById('bib-content').value.trim();
+  if (!content) { toast('Agrega el contenido primero'); return; }
+
+  toast('Analizando...');
+  document.querySelector('#panel-biblioteca .btn-primary').disabled = true;
+
+  const voice = getVoice();
+  const prompt = `Eres un estratega de contenido para creadores. Analiza este material y extrae todo lo aplicable.
+${voice}
+
+FUENTE: ${source || 'Sin título'}
+TIPO: ${type}
+CONTENIDO:
+${content.slice(0, 3000)}
+
+Responde con este formato exacto (sin JSON, sin markdown):
+
+RESUMEN:
+[resumen denso en 3-5 oraciones de qué trata este material]
+
+FRAMEWORKS:
+[frameworks, estructuras o metodologías concretas que enseña — sé específico con nombres y pasos]
+
+PRINCIPIOS:
+[principios clave que se pueden extraer — los más universales y poderosos]
+
+APLICACION_MARCA:
+[cómo aplicar esto específicamente al contenido de un creador mexicano de desarrollo personal masculino, hombres 18-28, en TikTok/Reels — sé muy concreto]
+
+APLICACION_SCRIPTS:
+[cómo usar esto al momento de escribir un script — estructuras, hooks, cierres, ángulos específicos]
+
+APLICACION_ESTRATEGIA:
+[cómo usar esto para la estrategia de contenido — series, consistencia, crecimiento de audiencia]
+
+CONSEJO_HOY:
+[una acción concreta que puede implementar esta semana basada en este material]`;
+
+  try {
+    const raw = await claude(prompt);
+
+    function extract(text, key) {
+      const regex = new RegExp(key + ':\s*([\s\S]*?)(?=\n[A-Z_]+:|$)', 'i');
+      const match = text.match(regex);
+      return match ? match[1].trim() : '';
+    }
+
+    const analysis = {
+      resumen:            extract(raw, 'RESUMEN'),
+      frameworks:         extract(raw, 'FRAMEWORKS'),
+      principios:         extract(raw, 'PRINCIPIOS'),
+      aplicacion_marca:   extract(raw, 'APLICACION_MARCA'),
+      aplicacion_scripts: extract(raw, 'APLICACION_SCRIPTS'),
+      aplicacion_estrategia: extract(raw, 'APLICACION_ESTRATEGIA'),
+      consejo_hoy:        extract(raw, 'CONSEJO_HOY'),
+    };
+
+    await sbPost('biblioteca', {
+      source,
+      type,
+      content: content.slice(0, 2000),
+      resumen: analysis.resumen,
+      frameworks: analysis.frameworks,
+      principios: analysis.principios,
+      aplicacion_marca: analysis.aplicacion_marca,
+      aplicacion_scripts: analysis.aplicacion_scripts,
+      aplicacion_estrategia: analysis.aplicacion_estrategia,
+      consejo_hoy: analysis.consejo_hoy,
+    });
+
+    // Learn silently
+    learn('biblioteca_added', {
+      source,
+      type,
+      frameworks: analysis.frameworks,
+      principios: analysis.principios,
+      aplicacion: analysis.aplicacion_scripts,
+    });
+
+    document.getElementById('bib-source').value = '';
+    document.getElementById('bib-content').value = '';
+    toast('Guardado en biblioteca ✓');
+    loadBiblioteca();
+  } catch(e) {
+    toast('Error: ' + e.message);
+  }
+  document.querySelector('#panel-biblioteca .btn-primary').disabled = false;
+}
+
+async function loadBiblioteca() {
+  try {
+    const entries = await sbGet('biblioteca', '?order=created_at.desc') || [];
+    document.getElementById('bib-count').textContent = entries.length;
+    const el = document.getElementById('bib-list');
+    if (!entries.length) {
+      el.innerHTML = '<div class="empty"><span class="empty-icon">📚</span>Sin entradas aún.</div>';
+      return;
+    }
+    const typeEmoji = { curso:'🎓', libro:'📖', video:'🎬', articulo:'📄', framework:'⚙️', otro:'📌' };
+    el.innerHTML = entries.map(e => `
+      <div class="card" style="cursor:pointer" onclick="showBibliotecaEntry('${e.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">
+              ${typeEmoji[e.type]||'📌'} ${e.source || 'Sin título'}
+            </div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:5px">${(e.resumen||'').slice(0,120)}...</div>
+            <div style="font-size:11px;color:var(--text3)">${new Date(e.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})}</div>
+          </div>
+          <span class="badge badge-info" style="flex-shrink:0">${e.type||'otro'}</span>
+        </div>
+        ${e.consejo_hoy ? `<div style="margin-top:.75rem;padding:.75rem;background:var(--ok-bg);border-radius:var(--rs);font-size:12px;color:var(--ok-text);line-height:1.5">💡 <strong>Consejo de hoy:</strong> ${e.consejo_hoy.slice(0,120)}...</div>` : ''}
+      </div>
+    `).join('');
+  } catch(e) { toast('Error cargando biblioteca'); }
+}
+
+function showBibliotecaEntry(id) {
+  // We need to re-fetch to get full data
+  sbGet('biblioteca', '?id=eq.' + id).then(entries => {
+    if (!entries || !entries.length) return;
+    const e = entries[0];
+    const sections = [
+      ['📋 Resumen', e.resumen],
+      ['⚙️ Frameworks y estructuras', e.frameworks],
+      ['💡 Principios clave', e.principios],
+      ['🎯 Cómo aplicar a tu marca', e.aplicacion_marca],
+      ['✍️ Cómo aplicar a tus scripts', e.aplicacion_scripts],
+      ['📈 Cómo aplicar a tu estrategia', e.aplicacion_estrategia],
+      ['⚡ Consejo para esta semana', e.consejo_hoy],
+    ];
+    const html = sections.filter(s => s[1]).map(s => `
+      <div class="modal-section" style="margin-bottom:1rem">
+        <div class="modal-section-title" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:.5rem">${s[0]}</div>
+        <div class="modal-body" style="font-size:13px;line-height:1.7;white-space:pre-wrap;background:var(--bg2);border-radius:var(--rs);padding:.875rem">${s[1]}</div>
+      </div>
+    `).join('');
+    document.getElementById('bib-modal-title').textContent = e.source || 'Detalle';
+    document.getElementById('bib-modal-content').innerHTML = html + `
+      <div style="display:flex;gap:8px;margin-top:1rem">
+        <button class="btn btn-danger btn-sm" onclick="deleteBibEntry('${e.id}')">Eliminar</button>
+      </div>`;
+    document.getElementById('bib-modal-overlay').classList.add('open');
+  }).catch(err => toast('Error: ' + err.message));
+}
+
+function closeBibModal() {
+  document.getElementById('bib-modal-overlay').classList.remove('open');
+}
+
+async function deleteBibEntry(id) {
+  if (!confirm('¿Eliminar esta entrada?')) return;
+  try {
+    await sbDelete('biblioteca', '?id=eq.' + id);
+    closeBibModal();
+    toast('Eliminado');
+    loadBiblioteca();
+  } catch(e) { toast('Error'); }
+}
+
+// Get biblioteca context for scripts and suggestions
+async function getBibliotecaContext() {
+  try {
+    const entries = await sbGet('biblioteca', '?order=created_at.desc&limit=10') || [];
+    if (!entries.length) return '';
+    const ctx = entries.map(e =>
+      `[${e.type}] ${e.source}: ${(e.principios||'').slice(0,100)} | Scripts: ${(e.aplicacion_scripts||'').slice(0,100)}`
+    ).join('\n');
+    return '\n\nBIBLIOTECA DE CONOCIMIENTO:\n' + ctx;
+  } catch(e) { return ''; }
 }
 
 </script>
