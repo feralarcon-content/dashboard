@@ -2080,91 +2080,92 @@ async function saveBiblioteca() {
   const content = document.getElementById('bib-content').value.trim();
   if (!content) { toast('Agrega el contenido primero'); return; }
 
-  toast('Analizando...');
-  document.querySelector('#panel-biblioteca .btn-primary').disabled = true;
-
-  const voice = getVoice();
-  const prompt = `Eres un estratega de contenido para creadores. Analiza este material y extrae todo lo aplicable.
-${voice}
-
-FUENTE: ${source || 'Sin título'}
-TIPO: ${type}
-CONTENIDO:
-${content.slice(0, 3000)}
-
-Responde con este formato exacto (sin JSON, sin markdown):
-
-RESUMEN:
-[resumen denso en 3-5 oraciones de qué trata este material]
-
-FRAMEWORKS:
-[frameworks, estructuras o metodologías concretas que enseña — sé específico con nombres y pasos]
-
-PRINCIPIOS:
-[principios clave que se pueden extraer — los más universales y poderosos]
-
-APLICACION_MARCA:
-[cómo aplicar esto específicamente al contenido de un creador mexicano de desarrollo personal masculino, hombres 18-28, en TikTok/Reels — sé muy concreto]
-
-APLICACION_SCRIPTS:
-[cómo usar esto al momento de escribir un script — estructuras, hooks, cierres, ángulos específicos]
-
-APLICACION_ESTRATEGIA:
-[cómo usar esto para la estrategia de contenido — series, consistencia, crecimiento de audiencia]
-
-CONSEJO_HOY:
-[una acción concreta que puede implementar esta semana basada en este material]`;
+  const btn = document.querySelector('#panel-biblioteca .btn-primary');
+  btn.disabled = true;
+  btn.textContent = '⏳ Guardando...';
 
   try {
+    // Save immediately — never lose data
+    const saved = await sbPost('biblioteca', {
+      source, type, content: content.slice(0, 2000),
+      resumen: 'Analizando...', frameworks: '', principios: '',
+      aplicacion_marca: '', aplicacion_scripts: '', aplicacion_estrategia: '', consejo_hoy: ''
+    });
+    const entryId = saved && saved[0] ? saved[0].id : null;
+    toast('Guardado. Analizando con IA...');
+    document.getElementById('bib-source').value = '';
+    document.getElementById('bib-content').value = '';
+    loadBiblioteca();
+
+    // Analyze — runs after save so data is never lost
+    btn.textContent = '⏳ Analizando...';
+    const voice = getVoice();
+    const prompt = `Eres un estratega de contenido para creadores mexicanos. Analiza este material.
+${voice}
+
+FUENTE: ${source || 'Sin titulo'}
+TIPO: ${type}
+CONTENIDO:
+${content.slice(0, 2500)}
+
+Responde con este formato exacto sin markdown:
+
+RESUMEN:
+[3-5 oraciones de que trata]
+
+FRAMEWORKS:
+[frameworks y estructuras concretas con nombres y pasos]
+
+PRINCIPIOS:
+[principios clave mas universales]
+
+APLICACION_MARCA:
+[como aplicar al contenido de creador mexicano masculino 18-28 en TikTok]
+
+APLICACION_SCRIPTS:
+[como usar en scripts, hooks, estructura, cierres]
+
+APLICACION_ESTRATEGIA:
+[como aplicar a estrategia, series, consistencia, crecimiento]
+
+CONSEJO_HOY:
+[una accion concreta para esta semana]`;
+
     const raw = await claude(prompt);
 
     function extract(text, key) {
-      const regex = new RegExp(key + ':\s*([\s\S]*?)(?=\n[A-Z_]+:|$)', 'i');
-      const match = text.match(regex);
-      return match ? match[1].trim() : '';
+      const r = new RegExp(key + ':[\s]*([\s\S]*?)(?=\n[A-Z_]+:|$)', 'i');
+      const m = text.match(r);
+      return m ? m[1].trim() : '';
     }
 
-    const analysis = {
-      resumen:            extract(raw, 'RESUMEN'),
-      frameworks:         extract(raw, 'FRAMEWORKS'),
-      principios:         extract(raw, 'PRINCIPIOS'),
-      aplicacion_marca:   extract(raw, 'APLICACION_MARCA'),
-      aplicacion_scripts: extract(raw, 'APLICACION_SCRIPTS'),
+    const a = {
+      resumen:               extract(raw, 'RESUMEN') || raw.slice(0, 300),
+      frameworks:            extract(raw, 'FRAMEWORKS'),
+      principios:            extract(raw, 'PRINCIPIOS'),
+      aplicacion_marca:      extract(raw, 'APLICACION_MARCA'),
+      aplicacion_scripts:    extract(raw, 'APLICACION_SCRIPTS'),
       aplicacion_estrategia: extract(raw, 'APLICACION_ESTRATEGIA'),
-      consejo_hoy:        extract(raw, 'CONSEJO_HOY'),
+      consejo_hoy:           extract(raw, 'CONSEJO_HOY'),
     };
 
-    await sbPost('biblioteca', {
-      source,
-      type,
-      content: content.slice(0, 2000),
-      resumen: analysis.resumen,
-      frameworks: analysis.frameworks,
-      principios: analysis.principios,
-      aplicacion_marca: analysis.aplicacion_marca,
-      aplicacion_scripts: analysis.aplicacion_scripts,
-      aplicacion_estrategia: analysis.aplicacion_estrategia,
-      consejo_hoy: analysis.consejo_hoy,
-    });
-
-    // Learn silently
-    learn('biblioteca_added', {
-      source,
-      type,
-      frameworks: analysis.frameworks,
-      principios: analysis.principios,
-      aplicacion: analysis.aplicacion_scripts,
-    });
-
-    document.getElementById('bib-source').value = '';
-    document.getElementById('bib-content').value = '';
-    toast('Guardado en biblioteca ✓');
-    loadBiblioteca();
+    if (entryId) {
+      await sbPatch('biblioteca', {
+        resumen: a.resumen, frameworks: a.frameworks, principios: a.principios,
+        aplicacion_marca: a.aplicacion_marca, aplicacion_scripts: a.aplicacion_scripts,
+        aplicacion_estrategia: a.aplicacion_estrategia, consejo_hoy: a.consejo_hoy
+      }, '?id=eq.' + entryId);
+      toast('Analisis completado ✓');
+      loadBiblioteca();
+      learn('biblioteca_added', { source, type, frameworks: a.frameworks, principios: a.principios, aplicacion: a.aplicacion_scripts });
+    }
   } catch(e) {
     toast('Error: ' + e.message);
   }
-  document.querySelector('#panel-biblioteca .btn-primary').disabled = false;
+  btn.disabled = false;
+  btn.textContent = '🔬 Analizar y guardar';
 }
+
 
 async function loadBiblioteca() {
   try {
